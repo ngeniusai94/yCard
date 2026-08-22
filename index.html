@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f8fa" />
+  <title>yCard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/omegon-theme.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <h1 class="app-title">내 카드</h1>
+      <div class="header-actions">
+        <button type="button" class="icon-btn" data-later aria-label="카드 등록">+</button>
+        <button type="button" class="icon-btn" data-later aria-label="설정">⚙</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="rich-card">
+        <p class="summary-label">이번 달 요약</p>
+        <p class="summary-text">등록 3장 · 주유 · 카페 · 쇼핑 혜택</p>
+      </section>
+
+      <article class="rich-card">
+        <div class="card-meta">
+          <p>신한카드 · <span class="chip tag-primary">신용</span></p>
+          <span class="chip tag-secondary">실적 30만</span>
+        </div>
+        <h2 class="card-name">Deep Oil</h2>
+        <div class="chip-row">
+          <span class="chip tag-primary">주유 60원/L</span>
+          <span class="chip tag-secondary">커피 10%</span>
+          <span class="chip badge-muted">+2</span>
+        </div>
+      </article>
+
+      <article class="rich-card">
+        <div class="card-meta">
+          <p>현대카드 · <span class="chip tag-secondary">체크</span></p>
+          <span class="chip badge-muted">실적 없음</span>
+        </div>
+        <h2 class="card-name">ZERO Edition2</h2>
+        <div class="chip-row">
+          <span class="chip tag-primary">모든 가맹 0.7%</span>
+          <span class="chip tag-secondary">온라인 1.5%</span>
+        </div>
+      </article>
+
+      <article class="rich-card">
+        <div class="card-meta">
+          <p>삼성카드 · <span class="chip tag-primary">신용</span></p>
+          <span class="chip tag-secondary">실적 40만</span>
+        </div>
+        <h2 class="card-name">taptap O</h2>
+        <div class="chip-row">
+          <span class="chip tag-primary">스타벅스 50%</span>
+          <span class="chip tag-primary">통신 10%</span>
+        </div>
+      </article>
+    </main>
+
+    <footer class="app-footer">
+      <button type="button" class="primary-btn" data-later>카메라로 카드 등록</button>
+    </footer>
+  </div>
+
+  <div id="appToast" class="toast" role="status"></div>
+  <script src="js/main.js"></script>
+</body>
+</html>

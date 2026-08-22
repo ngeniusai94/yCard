@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yCard · 토스형 메인</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+    body.embed { min-height: auto; padding: 0; background: transparent; }
+    body.embed .page-meta,
+    body.embed .back-link { display: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#D9DEE5] py-8">
+  <p class="page-meta mb-1 text-center text-xs font-semibold tracking-wide text-[#3182F6]">SELECTED</p>
+  <p class="page-meta mb-4 text-center text-sm font-medium text-[#4E5968]">스카이 블루 · 토스형 라이트</p>
+
+  <div class="relative mx-auto flex h-[812px] w-[390px] flex-col overflow-hidden rounded-[32px] border border-[#E5E8EB] bg-[#F4F5F7] shadow-2xl">
+    <div class="h-11 bg-white"></div>
+    <header class="flex h-14 shrink-0 items-center justify-between bg-white px-5">
+      <h1 class="text-xl font-bold text-[#191F28]">내 카드</h1>
+      <div class="flex gap-1 text-xl text-[#191F28]">
+        <span class="flex h-11 w-11 items-center justify-center">+</span>
+        <span class="flex h-11 w-11 items-center justify-center text-base">⚙</span>
+      </div>
+    </header>
+
+    <main class="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+      <section class="rounded-2xl bg-white px-4 py-3 shadow-[0_4px_16px_rgba(25,31,40,0.06)]">
+        <p class="text-xs font-semibold text-[#8B95A1]">이번 달 요약</p>
+        <p class="mt-1 text-[15px] font-bold text-[#191F28]">등록 3장 · 주유 · 카페 · 쇼핑 혜택</p>
+      </section>
+
+      <article class="rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(25,31,40,0.06)]">
+        <div class="flex items-start justify-between">
+          <p class="text-[13px] text-[#8B95A1]">신한카드 · <span class="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-semibold text-[#4F46E5]">신용</span></p>
+          <span class="rounded-full bg-[#FFF8E7] px-2 py-0.5 text-[11px] font-semibold text-[#C78500]">실적 30만</span>
+        </div>
+        <h2 class="mt-2 text-lg font-bold text-[#191F28]">Deep Oil</h2>
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          <span class="rounded-full bg-[#EEF6FF] px-2.5 py-1 text-xs font-semibold text-[#3182F6]">주유 60원/L</span>
+          <span class="rounded-full bg-[#F3F0FF] px-2.5 py-1 text-xs font-semibold text-[#6B4EFF]">커피 10%</span>
+          <span class="rounded-full bg-[#F4F5F7] px-2.5 py-1 text-xs font-semibold text-[#8B95A1]">+2</span>
+        </div>
+      </article>
+
+      <article class="rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(25,31,40,0.06)]">
+        <div class="flex items-start justify-between">
+          <p class="text-[13px] text-[#8B95A1]">현대카드 · <span class="rounded-full bg-[#E8F8F1] px-2 py-0.5 text-[11px] font-semibold text-[#00A86B]">체크</span></p>
+          <span class="rounded-full bg-[#F4F5F7] px-2 py-0.5 text-[11px] font-semibold text-[#8B95A1]">실적 없음</span>
+        </div>
+        <h2 class="mt-2 text-lg font-bold text-[#191F28]">ZERO Edition2</h2>
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          <span class="rounded-full bg-[#EEF6FF] px-2.5 py-1 text-xs font-semibold text-[#3182F6]">모든 가맹 0.7%</span>
+          <span class="rounded-full bg-[#F3F0FF] px-2.5 py-1 text-xs font-semibold text-[#6B4EFF]">온라인 1.5%</span>
+        </div>
+      </article>
+
+      <article class="rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(25,31,40,0.06)]">
+        <div class="flex items-start justify-between">
+          <p class="text-[13px] text-[#8B95A1]">삼성카드 · <span class="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-semibold text-[#4F46E5]">신용</span></p>
+          <span class="rounded-full bg-[#FFF8E7] px-2 py-0.5 text-[11px] font-semibold text-[#C78500]">실적 40만</span>
+        </div>
+        <h2 class="mt-2 text-lg font-bold text-[#191F28]">taptap O</h2>
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          <span class="rounded-full bg-[#EEF6FF] px-2.5 py-1 text-xs font-semibold text-[#3182F6]">스타벅스 50%</span>
+          <span class="rounded-full bg-[#EEF6FF] px-2.5 py-1 text-xs font-semibold text-[#3182F6]">통신 10%</span>
+        </div>
+      </article>
+    </main>
+
+    <footer class="shrink-0 border-t border-[#E5E8EB] bg-white px-5 pb-6 pt-3">
+      <button type="button" class="h-[52px] w-full rounded-xl bg-[#3182F6] text-base font-bold text-white">카메라로 카드 등록</button>
+    </footer>
+  </div>
+
+  <p class="back-link mt-6 text-center text-sm"><a class="text-[#3182F6]" href="index.html">← 시안 홈</a></p>
+  <script>if (window.self !== window.top) document.body.classList.add("embed");</script>
+</body>
+</html>

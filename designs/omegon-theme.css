@@ -1,0 +1,52 @@
+/* tweakcn Omegon Light 기반
+   출처: https://tweakcn.com/themes/cmnkz43lg000004k3b236fakp
+   커스텀: Dark 미사용. primary=민트, secondary=인디고 (토스 블루와 차별) */
+
+:root {
+  --background: oklch(0.9838 0.0035 247.8583);
+  --foreground: oklch(0.2064 0.0388 265.5472);
+  --card: oklch(1.0000 0 0);
+  --card-foreground: oklch(0.2064 0.0388 265.5472);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.2064 0.0388 265.5472);
+  --primary: oklch(0.6727 0.1333 166.2734);
+  --primary-foreground: oklch(0.1579 0.0083 181.7521);
+  --secondary: oklch(0.5449 0.2154 262.7414);
+  --secondary-foreground: oklch(0.9838 0.0035 247.8583);
+  --muted: oklch(0.9684 0.0068 247.8951);
+  --muted-foreground: oklch(0.5547 0.0407 257.4404);
+  --accent: oklch(0.9743 0.0205 176.0325);
+  --accent-foreground: oklch(0.3895 0.1629 262.7042);
+  --destructive: oklch(0.6368 0.2078 25.3259);
+  --destructive-foreground: oklch(0.9838 0.0035 247.8583);
+  --border: oklch(0.9290 0.0126 255.5317);
+  --input: oklch(0.9290 0.0126 255.5317);
+  --ring: oklch(0.6727 0.1333 166.2734);
+  --chart-1: oklch(0.6727 0.1333 166.2734);
+  --chart-2: oklch(0.5449 0.2154 262.7414);
+  --chart-3: oklch(0.6776 0.1481 238.1044);
+  --chart-4: oklch(0.7205 0.1920 149.4926);
+  --chart-5: oklch(0.6261 0.1859 259.5957);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.9838 0.0035 247.8583);
+  --sidebar-foreground: oklch(0.2064 0.0388 265.5472);
+  --sidebar-primary: oklch(0.6727 0.1333 166.2734);
+  --sidebar-primary-foreground: oklch(0.1579 0.0083 181.7521);
+  --sidebar-accent: oklch(0.9743 0.0205 176.0325);
+  --sidebar-accent-foreground: oklch(0.3895 0.1629 262.7042);
+  --sidebar-border: oklch(0.9290 0.0126 255.5317);
+  --sidebar-ring: oklch(0.6727 0.1333 166.2734);
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --letter-spacing: -0.01em;
+  --tracking-normal: -0.01em;
+  --shadow: 0px 4px 12px 0px hsl(222 47% 11% / 0.27), 0px 1px 2px -1px hsl(222 47% 11% / 0.27);
+  --shadow-lg: 0px 4px 12px 0px hsl(222 47% 11% / 0.27), 0px 4px 6px -1px hsl(222 47% 11% / 0.27);
+}
+
+html, body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+  color-scheme: light;
+}
