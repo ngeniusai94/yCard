@@ -11,11 +11,12 @@
   <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
-  <div class="app-shell">
+  <!-- 대시보드 -->
+  <div id="dashboardView" class="app-shell">
     <header class="app-header">
       <h1 class="app-title">내 카드</h1>
       <div class="header-actions">
-        <button type="button" class="icon-btn" data-later aria-label="카드 등록">+</button>
+        <button type="button" class="icon-btn" data-open-sheet aria-label="카드 등록">+</button>
         <button type="button" class="icon-btn" data-later aria-label="설정">⚙</button>
       </div>
     </header>
@@ -65,11 +66,55 @@
     </main>
 
     <footer class="app-footer">
-      <button type="button" class="primary-btn" data-later>카메라로 카드 등록</button>
+      <button type="button" class="primary-btn" data-open-sheet>카메라로 카드 등록</button>
     </footer>
   </div>
 
+  <!-- 촬영 미리보기: AI 전송 직전 -->
+  <div id="previewView" class="app-shell" hidden>
+    <header class="app-header">
+      <button type="button" id="previewBackBtn" class="icon-btn" aria-label="뒤로">←</button>
+      <h1 class="app-title">사진 확인</h1>
+      <span class="header-spacer"></span>
+    </header>
+    <main class="app-main">
+      <p class="guide-text">카드 앞면 또는 혜택 안내가 보이게 찍어 주세요. 글자가 흐리면 인식이 어려워요. 카드번호 전체가 보이지 않게 가려도 됩니다.</p>
+      <img id="previewImage" class="preview-image" alt="선택한 카드 사진" />
+      <p id="previewMeta" class="preview-meta"></p>
+    </main>
+    <footer class="app-footer">
+      <button type="button" id="analyzeReadyBtn" class="primary-btn">분석하기</button>
+      <button type="button" id="previewRetryBtn" class="ghost-btn">다시 촬영 / 선택</button>
+    </footer>
+  </div>
+
+  <!-- 촬영 / 앨범 선택 -->
+  <div id="actionSheet" class="sheet" hidden>
+    <div class="sheet-dim" data-sheet-dim></div>
+    <div class="sheet-panel" role="dialog" aria-label="사진 등록">
+      <button type="button" class="sheet-item" data-sheet-camera>사진 촬영</button>
+      <button type="button" class="sheet-item" data-sheet-gallery>앨범에서 선택</button>
+      <button type="button" class="sheet-item sheet-cancel" data-sheet-cancel>취소</button>
+    </div>
+  </div>
+
+  <div id="errorModal" class="modal" hidden>
+    <div class="sheet-dim" data-error-dim></div>
+    <div class="modal-panel" role="alertdialog">
+      <h2 data-error-title></h2>
+      <p data-error-body></p>
+      <button type="button" class="primary-btn" data-error-close>확인</button>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="loading" hidden>
+    <div class="loading-box">사진을 준비하고 있어요</div>
+  </div>
+
+  <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden />
+  <input id="galleryInput" type="file" accept="image/*" hidden />
+
   <div id="appToast" class="toast" role="status"></div>
-  <script src="js/main.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
