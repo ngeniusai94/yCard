@@ -1,4 +1,7 @@
-const ANALYZE_TIMEOUT_MS = 25000;
+import { logApp, logAppError, summarizeAnalyzeResult } from "../utils/logger.js";
+
+// 카드명 Vision + 혜택 조회 2단계라 여유를 둔다.
+const ANALYZE_TIMEOUT_MS = 40000;
 
 export class AnalyzeError extends Error {
   constructor(code) {
@@ -9,6 +12,14 @@ export class AnalyzeError extends Error {
 }
 
 async function postAnalyze(body, signal) {
+  const startedAt = Date.now();
+  logApp("analyze.send", {
+    mimeType: body.mimeType,
+    locale: body.locale,
+    base64Length: body.imageBase64?.length || 0,
+    approxByteSize: Math.round((body.imageBase64?.length || 0) * 0.75)
+  });
+
   const response = await fetch("/api/analyze-card", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -17,19 +28,28 @@ async function postAnalyze(body, signal) {
   });
 
   if (response.status === 429) {
+    logAppError("analyze.receive.error", { status: 429, code: "RATE_LIMIT", elapsedMs: Date.now() - startedAt });
     throw new AnalyzeError("RATE_LIMIT");
   }
   if (response.status >= 500) {
+    logAppError("analyze.receive.error", { status: response.status, code: "SERVER", elapsedMs: Date.now() - startedAt });
     throw new AnalyzeError("SERVER");
   }
   if (!response.ok) {
+    logAppError("analyze.receive.error", { status: response.status, code: "REQUEST", elapsedMs: Date.now() - startedAt });
     throw new AnalyzeError("REQUEST");
   }
 
   const data = await response.json();
   if (!data || typeof data !== "object" || !data.card) {
+    logAppError("analyze.receive.error", { code: "SCHEMA", elapsedMs: Date.now() - startedAt });
     throw new AnalyzeError("SCHEMA");
   }
+
+  logApp("analyze.receive", {
+    ...summarizeAnalyzeResult(data),
+    elapsedMs: Date.now() - startedAt
+  });
   return data;
 }
 

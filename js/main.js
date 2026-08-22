@@ -4,6 +4,7 @@ import { bindActionSheet } from "./components/ActionSheet.js";
 import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/ErrorModal.js";
 import { loadCards, saveAnalyzedCard } from "./store/cardStore.js";
 import { optimizeImage, formatByteSize } from "./utils/imageOptimizer.js";
+import { logApp, logAppError } from "./utils/logger.js";
 import { showToast } from "./utils/toast.js";
 import { bindConfirmForm, emptyConfirmCard, fillConfirmForm, readConfirmForm } from "./views/AnalyzeConfirmView.js";
 import { renderDashboard } from "./views/DashboardView.js";
@@ -60,6 +61,13 @@ async function handleSelectedFile(file) {
   try {
     const optimized = await optimizeImage(file);
     appState.pendingImage = optimized;
+    logApp("image.ready", {
+      mimeType: optimized.mimeType,
+      width: optimized.width,
+      height: optimized.height,
+      byteSize: optimized.byteSize,
+      base64Length: optimized.uploadBase64.length
+    });
     renderPreview(optimized);
     showView("preview");
   } catch (error) {
@@ -85,9 +93,17 @@ async function handleAnalyze() {
 
   const timeout = createAnalyzeTimeout();
   appState.analyzeSession = { timeout, canceledByUser: false };
-  setLoading(true, "혜택을 읽고 있어요", true);
+  setLoading(true, "카드명을 확인한 뒤 혜택을 찾고 있어요", true);
 
   try {
+    logApp("analyze.start", {
+      mimeType: appState.pendingImage.mimeType,
+      byteSize: appState.pendingImage.byteSize,
+      width: appState.pendingImage.width,
+      height: appState.pendingImage.height,
+      base64Length: appState.pendingImage.uploadBase64.length
+    });
+
     const result = await analyzeCard({
       imageBase64: appState.pendingImage.uploadBase64,
       mimeType: appState.pendingImage.mimeType,
@@ -95,9 +111,14 @@ async function handleAnalyze() {
     });
 
     if (isUnreadableResult(result)) {
+      logApp("analyze.unreadable", {
+        ok: result.ok,
+        confidence: result.confidence,
+        cardName: result.card?.cardName || ""
+      });
       errorModal.openModal({
         title: "카드를 인식하지 못했어요",
-        body: "초점을 맞추고, 혜택 글자가 보이게 다시 찍어 주세요.",
+        body: "카드명이 보이게 초점을 맞춘 뒤 다시 찍어 주세요.",
         secondaryLabel: "직접 입력",
         onSecondary() {
           openConfirm(emptyConfirmCard(), "MANUAL", 0);
@@ -106,11 +127,18 @@ async function handleAnalyze() {
       return;
     }
 
+    logApp("analyze.done", {
+      cardName: result.card?.cardName || "",
+      cardCompany: result.card?.cardCompany || "",
+      benefitCount: Array.isArray(result.card?.benefits) ? result.card.benefits.length : 0
+    });
     openConfirm(result.card, "VISION", Number(result.confidence) || 0);
   } catch (error) {
     if (appState.analyzeSession?.canceledByUser) {
+      logApp("analyze.canceled");
       return;
     }
+    logAppError("analyze.failed", { code: error.code || error.message });
     errorModal.openModal(mapAnalyzeError(error));
   } finally {
     timeout.clear();
