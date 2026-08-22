@@ -1,20 +1,44 @@
 import { createImageInput } from "./adapters/imageInput.js";
+import { analyzeCard, createAnalyzeTimeout, isUnreadableResult } from "./api/analyzeCard.js";
 import { bindActionSheet } from "./components/ActionSheet.js";
-import { bindErrorModal, mapImageError } from "./components/ErrorModal.js";
+import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/ErrorModal.js";
+import { loadCards, saveAnalyzedCard } from "./store/cardStore.js";
 import { optimizeImage, formatByteSize } from "./utils/imageOptimizer.js";
 import { showToast } from "./utils/toast.js";
+import { bindConfirmForm, emptyConfirmCard, fillConfirmForm, readConfirmForm } from "./views/AnalyzeConfirmView.js";
+import { renderDashboard } from "./views/DashboardView.js";
 
 const appState = {
-  pendingImage: null
+  pendingImage: null,
+  analyzeSource: "VISION",
+  analyzeConfidence: 0,
+  analyzeSession: null
 };
 
 function showView(viewName) {
   document.getElementById("dashboardView").hidden = viewName !== "dashboard";
   document.getElementById("previewView").hidden = viewName !== "preview";
+  document.getElementById("confirmView").hidden = viewName !== "confirm";
 }
 
-function setLoading(isLoading) {
-  document.getElementById("loadingOverlay").hidden = !isLoading;
+function refreshDashboard() {
+  renderDashboard(loadCards());
+}
+
+function setLoading(isLoading, message, canCancel = false) {
+  const overlay = document.getElementById("loadingOverlay");
+  const text = document.getElementById("loadingText");
+  const cancelBtn = document.getElementById("loadingCancelBtn");
+  overlay.hidden = !isLoading;
+  if (message) {
+    text.textContent = message;
+  }
+  cancelBtn.hidden = !canCancel;
+}
+
+function clearPreview() {
+  appState.pendingImage = null;
+  document.getElementById("previewImage").removeAttribute("src");
 }
 
 function renderPreview(pendingImage) {
@@ -24,8 +48,15 @@ function renderPreview(pendingImage) {
   previewMeta.textContent = `${pendingImage.width}×${pendingImage.height} · ${formatByteSize(pendingImage.byteSize)}`;
 }
 
+function openConfirm(card, source, confidence) {
+  appState.analyzeSource = source;
+  appState.analyzeConfidence = confidence;
+  fillConfirmForm(card);
+  showView("confirm");
+}
+
 async function handleSelectedFile(file) {
-  setLoading(true);
+  setLoading(true, "사진을 준비하고 있어요", false);
   try {
     const optimized = await optimizeImage(file);
     appState.pendingImage = optimized;
@@ -33,10 +64,89 @@ async function handleSelectedFile(file) {
     showView("preview");
   } catch (error) {
     appState.pendingImage = null;
-    const copy = mapImageError(error);
-    errorModal.openModal(copy);
+    errorModal.openModal(mapImageError(error));
   } finally {
     setLoading(false);
+  }
+}
+
+async function handleAnalyze() {
+  if (!appState.pendingImage) {
+    showToast("사진을 먼저 선택해 주세요.");
+    return;
+  }
+  if (appState.analyzeSession) {
+    return;
+  }
+  if (!navigator.onLine) {
+    errorModal.openModal(mapAnalyzeError({ code: "OFFLINE" }));
+    return;
+  }
+
+  const timeout = createAnalyzeTimeout();
+  appState.analyzeSession = { timeout, canceledByUser: false };
+  setLoading(true, "혜택을 읽고 있어요", true);
+
+  try {
+    const result = await analyzeCard({
+      imageBase64: appState.pendingImage.uploadBase64,
+      mimeType: appState.pendingImage.mimeType,
+      signal: timeout.signal
+    });
+
+    if (isUnreadableResult(result)) {
+      errorModal.openModal({
+        title: "카드를 인식하지 못했어요",
+        body: "초점을 맞추고, 혜택 글자가 보이게 다시 찍어 주세요.",
+        secondaryLabel: "직접 입력",
+        onSecondary() {
+          openConfirm(emptyConfirmCard(), "MANUAL", 0);
+        }
+      });
+      return;
+    }
+
+    openConfirm(result.card, "VISION", Number(result.confidence) || 0);
+  } catch (error) {
+    if (appState.analyzeSession?.canceledByUser) {
+      return;
+    }
+    errorModal.openModal(mapAnalyzeError(error));
+  } finally {
+    timeout.clear();
+    appState.analyzeSession = null;
+    setLoading(false);
+  }
+}
+
+function handleSaveCard() {
+  const card = readConfirmForm();
+  if (!card.cardName) {
+    showToast("카드명을 입력해 주세요.");
+    return;
+  }
+
+  try {
+    saveAnalyzedCard({
+      card,
+      thumbnailDataUrl: appState.pendingImage?.thumbnailDataUrl || "",
+      confidence: appState.analyzeConfidence,
+      source: appState.analyzeSource
+    });
+    clearPreview();
+    refreshDashboard();
+    showView("dashboard");
+    showToast("카드를 저장했어요.");
+  } catch (error) {
+    if (error.message === "CARD_LIMIT") {
+      showToast("최대 30장까지 등록할 수 있어요.");
+      return;
+    }
+    if (error.message === "STORAGE_FULL") {
+      showToast("기기에 공간이 부족해요.");
+      return;
+    }
+    showToast("저장하지 못했어요. 다시 시도해 주세요.");
   }
 }
 
@@ -73,32 +183,41 @@ function bindDashboard() {
 
 function bindPreview() {
   document.getElementById("previewBackBtn").addEventListener("click", () => {
-    appState.pendingImage = null;
-    document.getElementById("previewImage").removeAttribute("src");
+    clearPreview();
     showView("dashboard");
   });
   document.getElementById("previewRetryBtn").addEventListener("click", () => {
     actionSheet.openSheet();
   });
   document.getElementById("analyzeReadyBtn").addEventListener("click", () => {
-    if (!appState.pendingImage) {
-      showToast("사진을 먼저 선택해 주세요.");
-      return;
-    }
-    // AI 호출은 다음 단계. 페이로드만 준비된 상태.
-    console.log("analyzePayloadReady", {
-      mimeType: appState.pendingImage.mimeType,
-      byteSize: appState.pendingImage.byteSize,
-      width: appState.pendingImage.width,
-      height: appState.pendingImage.height,
-      base64Length: appState.pendingImage.uploadBase64.length
-    });
-    showToast("이미지 준비 완료. AI 분석은 다음에 연결합니다.");
+    handleAnalyze();
+  });
+}
+
+function bindConfirm() {
+  bindConfirmForm();
+  document.getElementById("confirmBackBtn").addEventListener("click", () => {
+    showView("preview");
+  });
+  document.getElementById("confirmRetryBtn").addEventListener("click", () => {
+    actionSheet.openSheet();
+  });
+  document.getElementById("saveCardBtn").addEventListener("click", handleSaveCard);
+}
+
+function bindLoadingCancel() {
+  document.getElementById("loadingCancelBtn").addEventListener("click", () => {
+    if (!appState.analyzeSession) return;
+    appState.analyzeSession.canceledByUser = true;
+    appState.analyzeSession.timeout.cancel();
   });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   bindDashboard();
   bindPreview();
+  bindConfirm();
+  bindLoadingCancel();
+  refreshDashboard();
   showView("dashboard");
 });

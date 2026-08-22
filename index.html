@@ -22,47 +22,17 @@
     </header>
 
     <main class="app-main">
-      <section class="rich-card">
+      <section id="summaryCard" class="rich-card" hidden>
         <p class="summary-label">이번 달 요약</p>
-        <p class="summary-text">등록 3장 · 주유 · 카페 · 쇼핑 혜택</p>
+        <p id="summaryText" class="summary-text">등록 0장</p>
       </section>
 
-      <article class="rich-card">
-        <div class="card-meta">
-          <p>신한카드 · <span class="chip tag-primary">신용</span></p>
-          <span class="chip tag-secondary">실적 30만</span>
-        </div>
-        <h2 class="card-name">Deep Oil</h2>
-        <div class="chip-row">
-          <span class="chip tag-primary">주유 60원/L</span>
-          <span class="chip tag-secondary">커피 10%</span>
-          <span class="chip badge-muted">+2</span>
-        </div>
-      </article>
+      <div id="cardList" class="card-list"></div>
 
-      <article class="rich-card">
-        <div class="card-meta">
-          <p>현대카드 · <span class="chip tag-secondary">체크</span></p>
-          <span class="chip badge-muted">실적 없음</span>
-        </div>
-        <h2 class="card-name">ZERO Edition2</h2>
-        <div class="chip-row">
-          <span class="chip tag-primary">모든 가맹 0.7%</span>
-          <span class="chip tag-secondary">온라인 1.5%</span>
-        </div>
-      </article>
-
-      <article class="rich-card">
-        <div class="card-meta">
-          <p>삼성카드 · <span class="chip tag-primary">신용</span></p>
-          <span class="chip tag-secondary">실적 40만</span>
-        </div>
-        <h2 class="card-name">taptap O</h2>
-        <div class="chip-row">
-          <span class="chip tag-primary">스타벅스 50%</span>
-          <span class="chip tag-primary">통신 10%</span>
-        </div>
-      </article>
+      <section id="emptyState" class="rich-card">
+        <p class="summary-text">첫 카드를 등록하고 혜택을 정리해 보세요</p>
+        <p class="guide-text">카메라나 앨범으로 카드 앞면을 올려 주세요.</p>
+      </section>
     </main>
 
     <footer class="app-footer">
@@ -78,13 +48,52 @@
       <span class="header-spacer"></span>
     </header>
     <main class="app-main">
-      <p class="guide-text">카드 앞면 또는 혜택 안내가 보이게 찍어 주세요. 글자가 흐리면 인식이 어려워요. 카드번호 전체가 보이지 않게 가려도 됩니다.</p>
+      <p class="guide-text">반드시 카드 앞면을 업로드 해주세요.<br>카드번호가 보이는 화면은 촬영하지 마세요.</p>
       <img id="previewImage" class="preview-image" alt="선택한 카드 사진" />
       <p id="previewMeta" class="preview-meta"></p>
     </main>
     <footer class="app-footer">
       <button type="button" id="analyzeReadyBtn" class="primary-btn">분석하기</button>
       <button type="button" id="previewRetryBtn" class="ghost-btn">다시 촬영 / 선택</button>
+    </footer>
+  </div>
+
+  <!-- AI 결과 확인 / 수정 -->
+  <div id="confirmView" class="app-shell" hidden>
+    <header class="app-header">
+      <button type="button" id="confirmBackBtn" class="icon-btn" aria-label="뒤로">←</button>
+      <h1 class="app-title">결과 확인</h1>
+      <span class="header-spacer"></span>
+    </header>
+    <main class="app-main">
+      <p class="guide-text">틀린 부분은 저장 전에 고쳐 주세요.</p>
+
+      <label class="form-label" for="inputCardName">카드명</label>
+      <input id="inputCardName" class="form-input" type="text" placeholder="예: 신한 Deep Oil" />
+
+      <label class="form-label" for="inputCardCompany">카드사</label>
+      <input id="inputCardCompany" class="form-input" type="text" placeholder="예: 신한카드" />
+
+      <label class="form-label" for="inputCardType">카드 종류</label>
+      <select id="inputCardType" class="form-input">
+        <option value="CREDIT">신용</option>
+        <option value="CHECK">체크</option>
+        <option value="UNKNOWN">기타</option>
+      </select>
+
+      <label class="form-label" for="inputPerformanceNote">전월실적</label>
+      <input id="inputPerformanceNote" class="form-input" type="text" placeholder="예: 전월실적 30만원 이상" />
+      <input id="inputPerformanceSpend" class="form-input" type="number" inputmode="numeric" min="0" step="10000" placeholder="전월실적 금액(원)" />
+
+      <div class="form-label-row">
+        <label class="form-label" for="addBenefitBtn">주요 혜택</label>
+        <button type="button" id="addBenefitBtn" class="text-btn">혜택 추가</button>
+      </div>
+      <div id="benefitList" class="benefit-list"></div>
+    </main>
+    <footer class="app-footer">
+      <button type="button" id="saveCardBtn" class="primary-btn">내 카드에 저장</button>
+      <button type="button" id="confirmRetryBtn" class="ghost-btn">다시 촬영 / 선택</button>
     </footer>
   </div>
 
@@ -103,12 +112,16 @@
     <div class="modal-panel" role="alertdialog">
       <h2 data-error-title></h2>
       <p data-error-body></p>
+      <button type="button" class="ghost-btn" data-error-secondary hidden></button>
       <button type="button" class="primary-btn" data-error-close>확인</button>
     </div>
   </div>
 
   <div id="loadingOverlay" class="loading" hidden>
-    <div class="loading-box">사진을 준비하고 있어요</div>
+    <div class="loading-box">
+      <p id="loadingText">사진을 준비하고 있어요</p>
+      <button type="button" id="loadingCancelBtn" class="ghost-btn" hidden>취소</button>
+    </div>
   </div>
 
   <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden />
