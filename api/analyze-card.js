@@ -1,5 +1,6 @@
 // Gemini 키는 서버에만 두고, 브라우저로는 절대 내려주지 않는다.
-const GEMINI_MODEL = "gemini-2.0-flash";
+// 2.0 Flash는 2026-06-01 종료. 새 키는 3.x부터 호출한다.
+const GEMINI_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
 
 const ANALYZE_PROMPT = `당신은 한국 신용/체크카드 이미지에서 카드 정보를 추출한다.
 반드시 JSON 객체만 출력한다.
@@ -83,9 +84,9 @@ function normalizeResult(parsed) {
   };
 }
 
-async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-  const geminiResponse = await fetch(geminiUrl, {
+async function requestGemini({ apiKey, model, imageBase64, mimeType, locale }) {
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  return fetch(geminiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -116,16 +117,45 @@ async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
       }
     })
   });
+}
 
-  if (!geminiResponse.ok) {
-    const error = new Error("AI_UPSTREAM");
-    error.status = geminiResponse.status;
-    throw error;
+async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
+  let lastStatus = 0;
+  let lastBody = "";
+
+  for (const model of GEMINI_MODELS) {
+    logServer("gemini.request", { model });
+    const geminiResponse = await requestGemini({
+      apiKey,
+      model,
+      imageBase64,
+      mimeType,
+      locale
+    });
+
+    if (geminiResponse.ok) {
+      const payload = await geminiResponse.json();
+      const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
+      return extractJson(text);
+    }
+
+    lastStatus = geminiResponse.status;
+    lastBody = await geminiResponse.text();
+    logServer("gemini.upstream.error", {
+      model,
+      status: lastStatus,
+      message: lastBody.slice(0, 300)
+    });
+
+    // 모델이 없으면 다음 후보로 재시도한다.
+    if (lastStatus !== 404) {
+      break;
+    }
   }
 
-  const payload = await geminiResponse.json();
-  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-  return extractJson(text);
+  const error = new Error("AI_UPSTREAM");
+  error.status = lastStatus;
+  throw error;
 }
 
 export default async function handler(req, res) {
@@ -153,7 +183,7 @@ export default async function handler(req, res) {
 
   logServer("analyze.send", {
     provider: "gemini",
-    model: GEMINI_MODEL,
+    models: GEMINI_MODELS,
     mimeType: safeMime,
     locale,
     base64Length: imageBase64.length,
