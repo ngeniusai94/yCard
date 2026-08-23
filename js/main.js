@@ -2,7 +2,7 @@ import { createImageInput } from "./adapters/imageInput.js";
 import { analyzeCard, createAnalyzeTimeout, isUnreadableResult } from "./api/analyzeCard.js";
 import { bindActionSheet } from "./components/ActionSheet.js";
 import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/ErrorModal.js";
-import { loadCards, rememberCard } from "./store/cardStore.js";
+import { deleteRememberedCard, loadCards, rememberCard } from "./store/cardStore.js";
 import { optimizeImage, formatByteSize } from "./utils/imageOptimizer.js";
 import { logApp, logAppError } from "./utils/logger.js";
 import { showToast } from "./utils/toast.js";
@@ -209,6 +209,13 @@ function bindDashboard() {
     button.addEventListener("click", () => {
       showToast("설정은 다음 단계에서 연결합니다.");
     });
+  });
+  document.getElementById("cardList").addEventListener("click", (event) => {
+    const deleteBtn = event.target.closest("[data-delete-card]");
+    if (!deleteBtn) return;
+    deleteRememberedCard(deleteBtn.dataset.deleteCard);
+    refreshDashboard();
+    showToast("기억을 지웠어요.");
   });
 }
 

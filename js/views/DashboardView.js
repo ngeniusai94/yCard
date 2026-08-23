@@ -24,11 +24,12 @@ export function renderDashboard(cards) {
   summaryText.textContent = `기억 ${cards.length}장`;
   cardList.innerHTML = cards
     .map((card) => {
+      const label = [card.cardCompany, card.cardName].filter(Boolean).join(" ");
       return `
-        <article class="rich-card">
-          <p class="card-company">${escapeHtml(card.cardCompany)}</p>
-          <h2 class="card-name">${escapeHtml(card.cardName)}</h2>
-        </article>
+        <div class="remember-row">
+          <p class="remember-text">${escapeHtml(label)}</p>
+          <button type="button" class="delete-btn" data-delete-card="${escapeHtml(card.id)}" aria-label="${escapeHtml(label)} 삭제">×</button>
+        </div>
       `;
     })
     .join("");

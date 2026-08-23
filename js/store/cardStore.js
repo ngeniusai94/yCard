@@ -25,6 +25,12 @@ export function loadCards() {
   return readCards();
 }
 
+export function deleteRememberedCard(cardId) {
+  const nextCards = readCards().filter((card) => card.id !== cardId);
+  writeCards(nextCards);
+  return nextCards;
+}
+
 export function rememberCard({ cardName, cardCompany }) {
   const name = (cardName || "").trim();
   const company = (cardCompany || "").trim();
