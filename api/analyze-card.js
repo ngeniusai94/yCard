@@ -1,6 +1,11 @@
 // Gemini 키는 서버에만 두고, 브라우저로는 절대 내려주지 않는다.
 // 2.0 Flash는 2026-06-01 종료. 새 키는 3.x부터 호출한다.
-const GEMINI_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
+const GEMINI_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-2.5-flash"
+];
 
 const ANALYZE_PROMPT = `당신은 한국 신용/체크카드 이미지에서 카드 정보를 추출한다.
 반드시 JSON 객체만 출력한다.
@@ -135,8 +140,16 @@ async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
 
     if (geminiResponse.ok) {
       const payload = await geminiResponse.json();
-      const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-      return extractJson(text);
+      const text = payload.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const parsed = extractJson(text);
+      // 이미지 원문은 남기지 않고, Gemini가 준 JSON만 남긴다.
+      logServer("gemini.raw.json", {
+        model,
+        finishReason: payload.candidates?.[0]?.finishReason || "",
+        rawText: text,
+        parsed
+      });
+      return parsed;
     }
 
     lastStatus = geminiResponse.status;
@@ -144,7 +157,7 @@ async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
     logServer("gemini.upstream.error", {
       model,
       status: lastStatus,
-      message: lastBody.slice(0, 300)
+      body: lastBody.slice(0, 800)
     });
 
     // 모델이 없으면 다음 후보로 재시도한다.
@@ -199,22 +212,13 @@ export default async function handler(req, res) {
     });
 
     if (!parsed || typeof parsed !== "object" || !parsed.card) {
-      logServer("analyze.error", { reason: "SCHEMA", elapsedMs: Date.now() - startedAt });
+      logServer("analyze.error", { reason: "SCHEMA", parsed, elapsedMs: Date.now() - startedAt });
       res.status(502).json({ ok: false, error: "SCHEMA" });
       return;
     }
 
     const result = normalizeResult(parsed);
-    logServer("analyze.receive", {
-      provider: "gemini",
-      ok: result.ok,
-      confidence: result.confidence,
-      cardName: result.card.cardName,
-      cardCompany: result.card.cardCompany,
-      benefitCount: result.card.benefits.length,
-      benefitTitles: result.card.benefits.slice(0, 5).map((benefit) => benefit.title || ""),
-      elapsedMs: Date.now() - startedAt
-    });
+    logServer("analyze.receive.json", result);
 
     res.status(200).json(result);
   } catch (error) {

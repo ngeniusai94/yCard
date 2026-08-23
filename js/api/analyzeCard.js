@@ -45,6 +45,7 @@ async function postAnalyze(body, signal) {
     throw new AnalyzeError("SCHEMA");
   }
 
+  logApp("analyze.receive.json", data);
   logApp("analyze.receive", {
     ...summarizeAnalyzeResult(data),
     elapsedMs: Date.now() - startedAt
