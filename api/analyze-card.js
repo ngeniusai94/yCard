@@ -14,6 +14,8 @@ const ANALYZE_PROMPT = `당신은 한국 신용/체크카드 이미지에서 카
 - 이미지에서 카드명, 카드사, 카드 종류를 읽는다.
 - 혜택 안내가 보이면 그대로 추출한다.
 - 혜택 글자가 없어도 카드명이 확인되면, 그 카드의 공개된 대표 혜택을 채운다.
+- 웹 검색으로 해당 카드의 카드사 공식 상세 페이지 URL을 찾아 officialDetailUrl에 넣는다.
+- officialDetailUrl은 카드사 공식 도메인의 https 상품 상세여야 한다. 블로그, 광고, 비교사이트는 쓰지 않는다. 못 찾으면 빈 문자열.
 - 모르면 지어내지 말고 빈 값/빈 배열을 쓴다.
 - 카드번호 전체, CVC, 유효기간, 주민번호, 서명은 절대 추출하지 않는다. 보이면 warnings에 "민감정보 감지됨 — 저장하지 않음"을 넣는다.
 - 카드가 아니거나 카드명을 읽기 어려우면 ok=false, confidence는 0.3 이하, cardName은 빈 문자열.
@@ -26,6 +28,7 @@ const ANALYZE_PROMPT = `당신은 한국 신용/체크카드 이미지에서 카
     "cardName": "",
     "cardCompany": "",
     "cardType": "CREDIT" | "CHECK" | "UNKNOWN",
+    "officialDetailUrl": "",
     "performance": { "previousMonthSpend": 0, "note": "" },
     "benefits": [
       {
@@ -71,6 +74,16 @@ function emptyBenefits() {
   };
 }
 
+function toHttpsUrl(value) {
+  if (!value || typeof value !== "string") return "";
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === "https:" ? parsed.toString() : "";
+  } catch (_error) {
+    return "";
+  }
+}
+
 function normalizeResult(parsed) {
   const card = parsed?.card || {};
   return {
@@ -80,6 +93,7 @@ function normalizeResult(parsed) {
       cardName: (card.cardName || "").trim(),
       cardCompany: card.cardCompany || "",
       cardType: card.cardType || "UNKNOWN",
+      officialDetailUrl: toHttpsUrl(card.officialDetailUrl),
       performance: card.performance || emptyBenefits().performance,
       benefits: Array.isArray(card.benefits) ? card.benefits : [],
       cautions: Array.isArray(card.cautions) ? card.cautions : [],
@@ -89,38 +103,42 @@ function normalizeResult(parsed) {
   };
 }
 
-async function requestGemini({ apiKey, model, imageBase64, mimeType, locale }) {
+async function requestGemini({ apiKey, model, imageBase64, mimeType, locale, useSearch }) {
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const body = {
+    system_instruction: {
+      parts: [{ text: ANALYZE_PROMPT }]
+    },
+    contents: [
+      {
+        parts: [
+          {
+            text: `locale=${locale}. 이미지에서 카드명, 카드사명, 카드 혜택을 추출하고, 웹 검색으로 카드사 공식 카드 상세 페이지 URL을 officialDetailUrl에 넣어 JSON으로 답하세요.`
+          },
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: imageBase64
+            }
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.1,
+      responseMimeType: "application/json"
+    }
+  };
+  if (useSearch) {
+    body.tools = [{ google_search: {} }];
+  }
   return fetch(geminiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": apiKey
     },
-    body: JSON.stringify({
-      system_instruction: {
-        parts: [{ text: ANALYZE_PROMPT }]
-      },
-      contents: [
-        {
-          parts: [
-            {
-              text: `locale=${locale}. 이미지에서 카드명, 카드사명, 카드 혜택을 JSON으로 추출하세요.`
-            },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: imageBase64
-              }
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        responseMimeType: "application/json"
-      }
-    })
+    body: JSON.stringify(body)
   });
 }
 
@@ -129,14 +147,28 @@ async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
   let lastBody = "";
 
   for (const model of GEMINI_MODELS) {
-    logServer("gemini.request", { model });
-    const geminiResponse = await requestGemini({
+    logServer("gemini.request", { model, useSearch: true });
+    let geminiResponse = await requestGemini({
       apiKey,
       model,
       imageBase64,
       mimeType,
-      locale
+      locale,
+      useSearch: true
     });
+
+    // 검색 도구와 JSON 응답을 같이 못 쓰는 모델은 검색 없이 한 번 더 시도한다.
+    if (geminiResponse.status === 400) {
+      logServer("gemini.request", { model, useSearch: false, reason: "retryWithoutSearch" });
+      geminiResponse = await requestGemini({
+        apiKey,
+        model,
+        imageBase64,
+        mimeType,
+        locale,
+        useSearch: false
+      });
+    }
 
     if (geminiResponse.ok) {
       const payload = await geminiResponse.json();

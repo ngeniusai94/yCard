@@ -16,27 +16,27 @@
     <header class="app-header">
       <h1 class="app-title">내 카드</h1>
       <div class="header-actions">
-        <button type="button" class="icon-btn" data-open-sheet aria-label="카드 등록">+</button>
+        <button type="button" class="icon-btn" data-open-sheet aria-label="혜택 보기">+</button>
         <button type="button" class="icon-btn" data-later aria-label="설정">⚙</button>
       </div>
     </header>
 
     <main class="app-main">
       <section id="summaryCard" class="rich-card" hidden>
-        <p class="summary-label">이번 달 요약</p>
-        <p id="summaryText" class="summary-text">등록 0장</p>
+        <p class="summary-label">기억한 카드</p>
+        <p id="summaryText" class="summary-text">기억 0장</p>
       </section>
 
       <div id="cardList" class="card-list"></div>
 
       <section id="emptyState" class="rich-card">
-        <p class="summary-text">첫 카드를 등록하고 혜택을 정리해 보세요</p>
+        <p class="summary-text">카드를 찍고 혜택을 확인해 보세요</p>
         <p class="guide-text">카메라나 앨범으로 카드 앞면을 올려 주세요.</p>
       </section>
     </main>
 
     <footer class="app-footer">
-      <button type="button" class="primary-btn" data-open-sheet>카메라로 카드 등록</button>
+      <button type="button" class="primary-btn" data-open-sheet>카메라로 혜택 보기</button>
     </footer>
   </div>
 
@@ -58,42 +58,31 @@
     </footer>
   </div>
 
-  <!-- AI 결과 확인 / 수정 -->
-  <div id="confirmView" class="app-shell" hidden>
+  <!-- 혜택 보기: 읽기 전용 -->
+  <div id="benefitView" class="app-shell" hidden>
     <header class="app-header">
-      <button type="button" id="confirmBackBtn" class="icon-btn" aria-label="뒤로">←</button>
-      <h1 class="app-title">결과 확인</h1>
+      <button type="button" id="benefitBackBtn" class="icon-btn" aria-label="뒤로">←</button>
+      <h1 class="app-title">혜택 보기</h1>
       <span class="header-spacer"></span>
     </header>
     <main class="app-main">
-      <p class="guide-text">틀린 부분은 저장 전에 고쳐 주세요.</p>
+      <section class="result-head">
+        <h2 id="resultCardName" class="result-card-name"></h2>
+        <p id="resultCardCompany" class="result-card-company"></p>
+      </section>
 
-      <label class="form-label" for="inputCardName">카드명</label>
-      <input id="inputCardName" class="form-input" type="text" placeholder="예: 신한 Deep Oil" />
-
-      <label class="form-label" for="inputCardCompany">카드사</label>
-      <input id="inputCardCompany" class="form-input" type="text" placeholder="예: 신한카드" />
-
-      <label class="form-label" for="inputCardType">카드 종류</label>
-      <select id="inputCardType" class="form-input">
-        <option value="CREDIT">신용</option>
-        <option value="CHECK">체크</option>
-        <option value="UNKNOWN">기타</option>
-      </select>
-
-      <label class="form-label" for="inputPerformanceNote">전월실적</label>
-      <input id="inputPerformanceNote" class="form-input" type="text" placeholder="예: 전월실적 30만원 이상" />
-      <input id="inputPerformanceSpend" class="form-input" type="number" inputmode="numeric" min="0" step="10000" placeholder="전월실적 금액(원)" />
-
-      <div class="form-label-row">
-        <label class="form-label" for="addBenefitBtn">주요 혜택</label>
-        <button type="button" id="addBenefitBtn" class="text-btn">혜택 추가</button>
-      </div>
       <div id="benefitList" class="benefit-list"></div>
+
+      <section class="notice-box">
+        <p>자세한 한도와 카드별 혜택은 카드사 홈페이지를 참고해주세요</p>
+        <a id="officialLinkBtn" class="link-btn" target="_blank" rel="noopener noreferrer" hidden>이동하기</a>
+      </section>
     </main>
     <footer class="app-footer">
-      <button type="button" id="saveCardBtn" class="primary-btn">내 카드에 저장</button>
-      <button type="button" id="confirmRetryBtn" class="ghost-btn">다시 촬영 / 선택</button>
+      <div class="footer-actions">
+        <button type="button" id="cancelResultBtn" class="ghost-btn">취소</button>
+        <button type="button" id="rememberCardBtn" class="primary-btn">기억</button>
+      </div>
     </footer>
   </div>
 

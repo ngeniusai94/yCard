@@ -2,24 +2,23 @@ import { createImageInput } from "./adapters/imageInput.js";
 import { analyzeCard, createAnalyzeTimeout, isUnreadableResult } from "./api/analyzeCard.js";
 import { bindActionSheet } from "./components/ActionSheet.js";
 import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/ErrorModal.js";
-import { loadCards, saveAnalyzedCard } from "./store/cardStore.js";
+import { loadCards, rememberCard } from "./store/cardStore.js";
 import { optimizeImage, formatByteSize } from "./utils/imageOptimizer.js";
 import { logApp, logAppError } from "./utils/logger.js";
 import { showToast } from "./utils/toast.js";
-import { bindConfirmForm, emptyConfirmCard, fillConfirmForm, readConfirmForm } from "./views/AnalyzeConfirmView.js";
+import { fillBenefitResult } from "./views/AnalyzeConfirmView.js";
 import { renderDashboard } from "./views/DashboardView.js";
 
 const appState = {
   pendingImage: null,
-  analyzeSource: "VISION",
-  analyzeConfidence: 0,
+  currentCard: null,
   analyzeSession: null
 };
 
 function showView(viewName) {
   document.getElementById("dashboardView").hidden = viewName !== "dashboard";
   document.getElementById("previewView").hidden = viewName !== "preview";
-  document.getElementById("confirmView").hidden = viewName !== "confirm";
+  document.getElementById("benefitView").hidden = viewName !== "benefit";
 }
 
 function refreshDashboard() {
@@ -39,6 +38,7 @@ function setLoading(isLoading, message, canCancel = false) {
 
 function clearPreview() {
   appState.pendingImage = null;
+  appState.currentCard = null;
   document.getElementById("previewImage").removeAttribute("src");
 }
 
@@ -49,11 +49,10 @@ function renderPreview(pendingImage) {
   previewMeta.textContent = `${pendingImage.width}×${pendingImage.height} · ${formatByteSize(pendingImage.byteSize)}`;
 }
 
-function openConfirm(card, source, confidence) {
-  appState.analyzeSource = source;
-  appState.analyzeConfidence = confidence;
-  fillConfirmForm(card);
-  showView("confirm");
+function openBenefitResult(card) {
+  appState.currentCard = card;
+  fillBenefitResult(card);
+  showView("benefit");
 }
 
 async function handleSelectedFile(file) {
@@ -118,11 +117,7 @@ async function handleAnalyze() {
       });
       errorModal.openModal({
         title: "카드를 인식하지 못했어요",
-        body: "카드명이 보이게 초점을 맞춘 뒤 다시 찍어 주세요.",
-        secondaryLabel: "직접 입력",
-        onSecondary() {
-          openConfirm(emptyConfirmCard(), "MANUAL", 0);
-        }
+        body: "카드명이 보이게 초점을 맞춘 뒤 다시 찍어 주세요."
       });
       return;
     }
@@ -130,9 +125,10 @@ async function handleAnalyze() {
     logApp("analyze.done", {
       cardName: result.card?.cardName || "",
       cardCompany: result.card?.cardCompany || "",
+      officialDetailUrl: result.card?.officialDetailUrl || "",
       benefitCount: Array.isArray(result.card?.benefits) ? result.card.benefits.length : 0
     });
-    openConfirm(result.card, "VISION", Number(result.confidence) || 0);
+    openBenefitResult(result.card);
   } catch (error) {
     if (appState.analyzeSession?.canceledByUser) {
       logApp("analyze.canceled");
@@ -147,35 +143,42 @@ async function handleAnalyze() {
   }
 }
 
-function handleSaveCard() {
-  const card = readConfirmForm();
-  if (!card.cardName) {
-    showToast("카드명을 입력해 주세요.");
+function handleRememberCard() {
+  const card = appState.currentCard;
+  if (!card?.cardName) {
+    showToast("카드명을 확인하지 못했어요.");
     return;
   }
 
   try {
-    saveAnalyzedCard({
-      card,
-      thumbnailDataUrl: appState.pendingImage?.thumbnailDataUrl || "",
-      confidence: appState.analyzeConfidence,
-      source: appState.analyzeSource
+    rememberCard({
+      cardName: card.cardName,
+      cardCompany: card.cardCompany
     });
     clearPreview();
     refreshDashboard();
     showView("dashboard");
-    showToast("카드를 저장했어요.");
+    showToast("카드를 기억했어요.");
   } catch (error) {
+    if (error.message === "ALREADY_SAVED") {
+      showToast("이미 기억한 카드예요.");
+      return;
+    }
     if (error.message === "CARD_LIMIT") {
-      showToast("최대 30장까지 등록할 수 있어요.");
+      showToast("최대 30장까지 기억할 수 있어요.");
       return;
     }
     if (error.message === "STORAGE_FULL") {
       showToast("기기에 공간이 부족해요.");
       return;
     }
-    showToast("저장하지 못했어요. 다시 시도해 주세요.");
+    showToast("기억하지 못했어요. 다시 시도해 주세요.");
   }
+}
+
+function handleCancelResult() {
+  clearPreview();
+  showView("dashboard");
 }
 
 const errorModal = bindErrorModal(document.getElementById("errorModal"));
@@ -222,15 +225,12 @@ function bindPreview() {
   });
 }
 
-function bindConfirm() {
-  bindConfirmForm();
-  document.getElementById("confirmBackBtn").addEventListener("click", () => {
+function bindBenefitResult() {
+  document.getElementById("benefitBackBtn").addEventListener("click", () => {
     showView("preview");
   });
-  document.getElementById("confirmRetryBtn").addEventListener("click", () => {
-    actionSheet.openSheet();
-  });
-  document.getElementById("saveCardBtn").addEventListener("click", handleSaveCard);
+  document.getElementById("cancelResultBtn").addEventListener("click", handleCancelResult);
+  document.getElementById("rememberCardBtn").addEventListener("click", handleRememberCard);
 }
 
 function bindLoadingCancel() {
@@ -244,7 +244,7 @@ function bindLoadingCancel() {
 document.addEventListener("DOMContentLoaded", () => {
   bindDashboard();
   bindPreview();
-  bindConfirm();
+  bindBenefitResult();
   bindLoadingCancel();
   refreshDashboard();
   showView("dashboard");

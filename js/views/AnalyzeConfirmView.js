@@ -1,78 +1,60 @@
-function createBenefitRow(benefit = {}) {
-  const row = document.createElement("div");
-  row.className = "benefit-row";
-  row.innerHTML = `
-    <input class="form-input" data-benefit-title type="text" placeholder="혜택 제목" value="" />
-    <select class="form-input" data-benefit-type>
-      <option value="DISCOUNT">할인</option>
-      <option value="POINT">적립</option>
-      <option value="CASHBACK">캐시백</option>
-    </select>
-    <button type="button" class="row-remove" aria-label="혜택 삭제">삭제</button>
-  `;
-  row.querySelector("[data-benefit-title]").value = benefit.title || "";
-  row.querySelector("[data-benefit-type]").value = benefit.type || "DISCOUNT";
-  row.querySelector(".row-remove").addEventListener("click", () => {
-    const list = document.getElementById("benefitList");
-    if (list.children.length > 1) {
-      row.remove();
-    }
-  });
-  return row;
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
-export function emptyConfirmCard() {
-  return {
-    cardName: "",
-    cardCompany: "",
-    cardType: "UNKNOWN",
-    performance: { previousMonthSpend: 0, note: "" },
-    benefits: []
-  };
+function benefitTypeLabel(type) {
+  if (type === "POINT") return "적립";
+  if (type === "CASHBACK") return "캐시백";
+  return "할인";
 }
 
-export function fillConfirmForm(card) {
-  document.getElementById("inputCardName").value = card.cardName || "";
-  document.getElementById("inputCardCompany").value = card.cardCompany || "";
-  document.getElementById("inputCardType").value = card.cardType || "UNKNOWN";
-  document.getElementById("inputPerformanceNote").value = card.performance?.note || "";
-  document.getElementById("inputPerformanceSpend").value = card.performance?.previousMonthSpend || "";
+function benefitTypeClass(type) {
+  return type === "POINT" || type === "CASHBACK" ? "tag-secondary" : "tag-primary";
+}
+
+function benefitDetail(benefit) {
+  return [benefit.condition, benefit.limit, benefit.rateOrAmount]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+export function fillBenefitResult(card) {
+  document.getElementById("resultCardName").textContent = card.cardName || "카드명 없음";
+  document.getElementById("resultCardCompany").textContent = card.cardCompany || "";
 
   const list = document.getElementById("benefitList");
-  list.innerHTML = "";
-  const benefits = (card.benefits || [])
-    .slice(0, 8)
-    .map((benefit) => ({
-      title: benefit.title || [benefit.category, benefit.rateOrAmount].filter(Boolean).join(" "),
-      type: benefit.type || "DISCOUNT"
-    }));
-  (benefits.length ? benefits : [{}]).forEach((benefit) => list.appendChild(createBenefitRow(benefit)));
-}
+  const benefits = Array.isArray(card.benefits) ? card.benefits : [];
+  if (!benefits.length) {
+    list.innerHTML = `<p class="guide-text">표시할 혜택이 없어요. 카드사 페이지에서 확인해 주세요.</p>`;
+  } else {
+    list.innerHTML = benefits
+      .map((benefit) => {
+        const title = benefit.title || [benefit.category, benefit.rateOrAmount].filter(Boolean).join(" ");
+        const detail = benefitDetail(benefit);
+        return `
+          <article class="benefit-item">
+            <span class="chip ${benefitTypeClass(benefit.type)}">${benefitTypeLabel(benefit.type)}</span>
+            <div>
+              <p class="benefit-title">${escapeHtml(title)}</p>
+              ${detail ? `<p class="benefit-detail">${escapeHtml(detail)}</p>` : ""}
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
 
-export function bindConfirmForm() {
-  document.getElementById("addBenefitBtn").addEventListener("click", () => {
-    document.getElementById("benefitList").appendChild(createBenefitRow());
-  });
-}
-
-export function readConfirmForm() {
-  const spendRaw = document.getElementById("inputPerformanceSpend").value;
-  const benefits = [...document.querySelectorAll("#benefitList .benefit-row")]
-    .map((row) => ({
-      title: row.querySelector("[data-benefit-title]").value.trim(),
-      type: row.querySelector("[data-benefit-type]").value
-    }))
-    .filter((benefit) => benefit.title);
-
-  return {
-    cardName: document.getElementById("inputCardName").value.trim(),
-    cardCompany: document.getElementById("inputCardCompany").value.trim(),
-    cardType: document.getElementById("inputCardType").value,
-    performance: {
-      previousMonthSpend: Number(spendRaw) || 0,
-      note: document.getElementById("inputPerformanceNote").value.trim()
-    },
-    benefits,
-    cautions: []
-  };
+  const officialLink = document.getElementById("officialLinkBtn");
+  const officialUrl = card.officialDetailUrl || "";
+  if (officialUrl) {
+    officialLink.href = officialUrl;
+    officialLink.hidden = false;
+  } else {
+    officialLink.removeAttribute("href");
+    officialLink.hidden = true;
+  }
 }
