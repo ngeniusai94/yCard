@@ -1,8 +1,8 @@
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-const MAX_EDGE = 1280;
+const MAX_EDGE = 768;
 const THUMB_EDGE = 360;
-const TARGET_BYTES = 800 * 1024;
-const MAX_BYTES = 1.5 * 1024 * 1024;
+const TARGET_BYTES = 400 * 1024;
+const MAX_BYTES = 800 * 1024;
 
 export function isAllowedImage(file) {
   if (!file) return false;
