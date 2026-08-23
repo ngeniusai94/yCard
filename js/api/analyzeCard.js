@@ -1,6 +1,5 @@
 import { logApp, logAppError, summarizeAnalyzeResult } from "../utils/logger.js";
 
-// 카드명 Vision + 혜택 조회 2단계라 여유를 둔다.
 const ANALYZE_TIMEOUT_MS = 40000;
 
 export class AnalyzeError extends Error {

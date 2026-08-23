@@ -93,7 +93,7 @@ async function handleAnalyze() {
 
   const timeout = createAnalyzeTimeout();
   appState.analyzeSession = { timeout, canceledByUser: false };
-  setLoading(true, "카드명을 확인한 뒤 혜택을 찾고 있어요", true);
+  setLoading(true, "카드명과 혜택을 읽고 있어요", true);
 
   try {
     logApp("analyze.start", {
