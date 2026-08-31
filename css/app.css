@@ -3,6 +3,8 @@
   flex-direction: column;
   min-height: 100dvh;
   min-height: 100svh;
+  max-width: 100%;
+  overflow-x: hidden;
   padding-top: env(safe-area-inset-top);
 }
 
@@ -23,7 +25,10 @@
 
 .app-main {
   flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-x: none;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -112,11 +117,16 @@
   background: var(--muted);
 }
 
+.remember-identity > div {
+  min-width: 0;
+}
+
 .remember-text {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .remember-company {
@@ -320,12 +330,14 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .benefit-detail {
   margin: 4px 0 0;
   font-size: 13px;
   color: var(--muted-foreground);
+  overflow-wrap: anywhere;
 }
 
 .notice-box {
@@ -459,6 +471,7 @@
 .modal-panel h2 {
   margin: 0;
   font-size: 18px;
+  overflow-wrap: anywhere;
 }
 
 .modal-panel p {
