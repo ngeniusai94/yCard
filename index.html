@@ -75,7 +75,8 @@
     </header>
     <main class="app-main">
       <section class="result-head">
-        <h2 id="resultCardName" class="result-card-name"></h2>
+        <label class="form-label" for="resultCardNameInput">카드명</label>
+        <input id="resultCardNameInput" class="form-input result-card-name-input" type="text" placeholder="카드명을 입력해 주세요" autocomplete="off" />
         <p id="resultCardCompany" class="result-card-company"></p>
       </section>
 
@@ -91,7 +92,7 @@
     </main>
     <footer class="app-footer">
       <div class="footer-actions">
-        <button type="button" id="cancelResultBtn" class="ghost-btn">취소</button>
+        <button type="button" id="cancelResultBtn" class="outline-btn">취소</button>
         <button type="button" id="rememberCardBtn" class="primary-btn">기억</button>
       </div>
     </footer>
@@ -104,6 +105,17 @@
       <button type="button" class="sheet-item" data-sheet-camera>사진 촬영</button>
       <button type="button" class="sheet-item" data-sheet-gallery>앨범에서 선택</button>
       <button type="button" class="sheet-item sheet-cancel" data-sheet-cancel>취소</button>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal" hidden>
+    <div class="sheet-dim" data-confirm-dim></div>
+    <div class="modal-panel" role="dialog" aria-labelledby="confirmTitle">
+      <h2 id="confirmTitle" data-confirm-title></h2>
+      <div class="footer-actions modal-actions">
+        <button type="button" class="outline-btn" data-confirm-cancel>취소</button>
+        <button type="button" class="primary-btn" data-confirm-ok>기억</button>
+      </div>
     </div>
   </div>
 

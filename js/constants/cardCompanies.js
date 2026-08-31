@@ -1,39 +1,39 @@
-// 카드사 별칭 → { 대표명, 홈페이지 } 매핑. 클라이언트(OCR 파싱)와 서버(홈페이지 링크) 양쪽에서 공유한다.
+// 카드사 별칭 → { 대표명, 홈페이지, 원형 CI } 매핑. 클라이언트(OCR 파싱)와 서버(홈페이지 링크) 양쪽에서 공유한다.
 export const cardCompanyDirectory = {
-  신한카드: { name: "신한카드", homePage: "https://www.shinhancard.com" },
-  신한: { name: "신한카드", homePage: "https://www.shinhancard.com" },
-  현대카드: { name: "현대카드", homePage: "https://www.hyundaicard.com" },
-  현대: { name: "현대카드", homePage: "https://www.hyundaicard.com" },
-  삼성카드: { name: "삼성카드", homePage: "https://www.samsungcard.com" },
-  삼성: { name: "삼성카드", homePage: "https://www.samsungcard.com" },
-  KB국민카드: { name: "KB국민카드", homePage: "https://card.kbcard.com" },
-  국민카드: { name: "KB국민카드", homePage: "https://card.kbcard.com" },
-  국민: { name: "KB국민카드", homePage: "https://card.kbcard.com" },
-  KB: { name: "KB국민카드", homePage: "https://card.kbcard.com" },
-  우리카드: { name: "우리카드", homePage: "https://www.wooricard.com" },
-  우리: { name: "우리카드", homePage: "https://www.wooricard.com" },
-  하나카드: { name: "하나카드", homePage: "https://www.hanacard.co.kr" },
-  하나: { name: "하나카드", homePage: "https://www.hanacard.co.kr" },
-  롯데카드: { name: "롯데카드", homePage: "https://www.lottecard.co.kr" },
-  롯데: { name: "롯데카드", homePage: "https://www.lottecard.co.kr" },
-  NH농협카드: { name: "NH농협카드", homePage: "https://card.nonghyup.com" },
-  농협카드: { name: "NH농협카드", homePage: "https://card.nonghyup.com" },
-  농협: { name: "NH농협카드", homePage: "https://card.nonghyup.com" },
-  IBK기업은행: { name: "IBK기업은행", homePage: "https://www.ibk.co.kr" },
-  기업은행: { name: "IBK기업은행", homePage: "https://www.ibk.co.kr" },
-  BC카드: { name: "BC카드", homePage: "https://www.bccard.com" },
-  BC: { name: "BC카드", homePage: "https://www.bccard.com" },
-  BNK부산은행: { name: "BNK부산은행", homePage: "https://www.busanbank.co.kr" },
-  부산은행: { name: "BNK부산은행", homePage: "https://www.busanbank.co.kr" },
-  BNK경남은행: { name: "BNK경남은행", homePage: "https://www.knbank.co.kr" },
-  경남은행: { name: "BNK경남은행", homePage: "https://www.knbank.co.kr" },
-  광주은행: { name: "광주은행", homePage: "https://www.kjbank.com" },
-  전북은행: { name: "전북은행", homePage: "https://www.jbbank.co.kr" },
-  제주은행: { name: "제주은행", homePage: "https://www.jejubank.co.kr" },
-  수협은행: { name: "Sh수협은행", homePage: "https://www.suhyup-bank.com" },
-  카카오뱅크: { name: "카카오뱅크", homePage: "https://www.kakaobank.com" },
-  케이뱅크: { name: "케이뱅크", homePage: "https://www.kbanknow.com" },
-  토스뱅크: { name: "토스뱅크", homePage: "https://www.tossbank.com" }
+  신한카드: { name: "신한카드", homePage: "https://www.shinhancard.com", logoText: "신한", logoBg: "#0046FF" },
+  신한: { name: "신한카드", homePage: "https://www.shinhancard.com", logoText: "신한", logoBg: "#0046FF" },
+  현대카드: { name: "현대카드", homePage: "https://www.hyundaicard.com", logoText: "현대", logoBg: "#111111" },
+  현대: { name: "현대카드", homePage: "https://www.hyundaicard.com", logoText: "현대", logoBg: "#111111" },
+  삼성카드: { name: "삼성카드", homePage: "https://www.samsungcard.com", logoText: "삼성", logoBg: "#1428A0" },
+  삼성: { name: "삼성카드", homePage: "https://www.samsungcard.com", logoText: "삼성", logoBg: "#1428A0" },
+  KB국민카드: { name: "KB국민카드", homePage: "https://card.kbcard.com", logoText: "KB", logoBg: "#FFBC00", logoColor: "#1A1A1A" },
+  국민카드: { name: "KB국민카드", homePage: "https://card.kbcard.com", logoText: "KB", logoBg: "#FFBC00", logoColor: "#1A1A1A" },
+  국민: { name: "KB국민카드", homePage: "https://card.kbcard.com", logoText: "KB", logoBg: "#FFBC00", logoColor: "#1A1A1A" },
+  KB: { name: "KB국민카드", homePage: "https://card.kbcard.com", logoText: "KB", logoBg: "#FFBC00", logoColor: "#1A1A1A" },
+  우리카드: { name: "우리카드", homePage: "https://www.wooricard.com", logoText: "우리", logoBg: "#0067AC" },
+  우리: { name: "우리카드", homePage: "https://www.wooricard.com", logoText: "우리", logoBg: "#0067AC" },
+  하나카드: { name: "하나카드", homePage: "https://www.hanacard.co.kr", logoText: "하나", logoBg: "#008485" },
+  하나: { name: "하나카드", homePage: "https://www.hanacard.co.kr", logoText: "하나", logoBg: "#008485" },
+  롯데카드: { name: "롯데카드", homePage: "https://www.lottecard.co.kr", logoText: "롯데", logoBg: "#E6002D" },
+  롯데: { name: "롯데카드", homePage: "https://www.lottecard.co.kr", logoText: "롯데", logoBg: "#E6002D" },
+  NH농협카드: { name: "NH농협카드", homePage: "https://card.nonghyup.com", logoText: "농협", logoBg: "#1E7A46" },
+  농협카드: { name: "NH농협카드", homePage: "https://card.nonghyup.com", logoText: "농협", logoBg: "#1E7A46" },
+  농협: { name: "NH농협카드", homePage: "https://card.nonghyup.com", logoText: "농협", logoBg: "#1E7A46" },
+  IBK기업은행: { name: "IBK기업은행", homePage: "https://www.ibk.co.kr", logoText: "IBK", logoBg: "#003DA5" },
+  기업은행: { name: "IBK기업은행", homePage: "https://www.ibk.co.kr", logoText: "IBK", logoBg: "#003DA5" },
+  BC카드: { name: "BC카드", homePage: "https://www.bccard.com", logoText: "BC", logoBg: "#1B4EA0" },
+  BC: { name: "BC카드", homePage: "https://www.bccard.com", logoText: "BC", logoBg: "#1B4EA0" },
+  BNK부산은행: { name: "BNK부산은행", homePage: "https://www.busanbank.co.kr", logoText: "BNK", logoBg: "#E60012" },
+  부산은행: { name: "BNK부산은행", homePage: "https://www.busanbank.co.kr", logoText: "BNK", logoBg: "#E60012" },
+  BNK경남은행: { name: "BNK경남은행", homePage: "https://www.knbank.co.kr", logoText: "BNK", logoBg: "#E60012" },
+  경남은행: { name: "BNK경남은행", homePage: "https://www.knbank.co.kr", logoText: "BNK", logoBg: "#E60012" },
+  광주은행: { name: "광주은행", homePage: "https://www.kjbank.com", logoText: "광주", logoBg: "#F47B20" },
+  전북은행: { name: "전북은행", homePage: "https://www.jbbank.co.kr", logoText: "전북", logoBg: "#0B6E4F" },
+  제주은행: { name: "제주은행", homePage: "https://www.jejubank.co.kr", logoText: "제주", logoBg: "#1C8A6A" },
+  수협은행: { name: "Sh수협은행", homePage: "https://www.suhyup-bank.com", logoText: "수협", logoBg: "#0072BC" },
+  카카오뱅크: { name: "카카오뱅크", homePage: "https://www.kakaobank.com", logoText: "카뱅", logoBg: "#FEE500", logoColor: "#191919" },
+  케이뱅크: { name: "케이뱅크", homePage: "https://www.kbanknow.com", logoText: "케이", logoBg: "#4B2E83" },
+  토스뱅크: { name: "토스뱅크", homePage: "https://www.tossbank.com", logoText: "토스", logoBg: "#0064FF" }
 };
 
 // 별칭 중 길이가 긴 것부터 매칭해야 "국민"이 "국민카드"보다 먼저 걸리는 문제를 막는다.
@@ -49,12 +49,26 @@ export function buildCardSearchUrl(cardCompany, cardName) {
   return `https://search.naver.com/search.naver?query=${encodeURIComponent(keyword)}`;
 }
 
-export function findCardCompanyHomePage(cardCompany) {
+function findCardCompanyEntry(cardCompany) {
   const company = (cardCompany || "").replaceAll(" ", "");
-  if (!company) return "";
-  if (cardCompanyDirectory[company]) return cardCompanyDirectory[company].homePage;
+  if (!company) return null;
+  if (cardCompanyDirectory[company]) return cardCompanyDirectory[company];
   const matchedKey = cardCompanyAliases.find((alias) => company.includes(alias));
-  return matchedKey ? cardCompanyDirectory[matchedKey].homePage : "";
+  return matchedKey ? cardCompanyDirectory[matchedKey] : null;
+}
+
+export function findCardCompanyHomePage(cardCompany) {
+  return findCardCompanyEntry(cardCompany)?.homePage || "";
+}
+
+// 알려진 카드사만 원형 CI를 만든다. 매칭되지 않으면 빈 문자열을 돌려 로고를 숨긴다.
+export function findCardCompanyLogo(cardCompany) {
+  const entry = findCardCompanyEntry(cardCompany);
+  if (!entry?.logoText || !entry?.logoBg) return "";
+  const fill = entry.logoColor || "#ffffff";
+  const fontSize = entry.logoText.length >= 3 ? 18 : 22;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="${entry.logoBg}"/><text x="32" y="40" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="${fill}" font-family="system-ui,sans-serif">${entry.logoText}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 function levenshteinDistance(a, b) {

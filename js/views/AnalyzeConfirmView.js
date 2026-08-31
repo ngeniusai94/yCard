@@ -23,7 +23,7 @@ function benefitDetail(benefit) {
 }
 
 export function fillBenefitResult(card) {
-  document.getElementById("resultCardName").textContent = card.cardName || "카드명 없음";
+  document.getElementById("resultCardNameInput").value = card.cardName || "";
   document.getElementById("resultCardCompany").textContent = card.cardCompany || "";
 
   const list = document.getElementById("benefitList");

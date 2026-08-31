@@ -1,3 +1,5 @@
+import { findCardCompanyLogo } from "../constants/cardCompanies.js";
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -24,11 +26,21 @@ export function renderDashboard(cards) {
   summaryText.textContent = `기억 ${cards.length}장`;
   cardList.innerHTML = cards
     .map((card) => {
-      const label = [card.cardCompany, card.cardName].filter(Boolean).join(" ");
+      const cardName = card.cardName || "카드명 없음";
+      const logoUrl = findCardCompanyLogo(card.cardCompany);
+      const logoHtml = logoUrl
+        ? `<img class="company-logo" src="${logoUrl}" alt="${escapeHtml(card.cardCompany || "")} 로고" />`
+        : "";
       return `
         <div class="remember-row">
-          <p class="remember-text">${escapeHtml(label)}</p>
-          <button type="button" class="delete-btn" data-delete-card="${escapeHtml(card.id)}" aria-label="${escapeHtml(label)} 삭제">×</button>
+          <div class="remember-identity">
+            ${logoHtml}
+            <div>
+              <p class="remember-text">${escapeHtml(cardName)}</p>
+              ${card.cardCompany ? `<p class="remember-company">${escapeHtml(card.cardCompany)}</p>` : ""}
+            </div>
+          </div>
+          <button type="button" class="delete-btn" data-delete-card="${escapeHtml(card.id)}" aria-label="${escapeHtml(cardName)} 삭제">×</button>
         </div>
       `;
     })

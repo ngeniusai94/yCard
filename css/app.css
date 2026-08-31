@@ -96,11 +96,34 @@
   border-bottom: 1px solid var(--border);
 }
 
+.remember-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.company-logo {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--muted);
+}
+
 .remember-text {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
+}
+
+.remember-company {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
 }
 
 .delete-btn {
@@ -118,9 +141,13 @@
   padding-bottom: 4px;
 }
 
-.result-card-name {
-  margin: 0;
-  font-size: 22px;
+.result-head .form-label {
+  margin-top: 0;
+}
+
+.result-card-name-input {
+  height: 52px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -342,10 +369,26 @@
 }
 
 .footer-actions .ghost-btn,
+.footer-actions .outline-btn,
 .footer-actions .primary-btn {
   width: 100%;
   height: 52px;
   margin: 0;
+}
+
+.outline-btn {
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--foreground);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.modal-actions {
+  margin-top: 16px;
 }
 
 .ghost-btn {

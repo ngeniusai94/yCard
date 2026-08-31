@@ -1,6 +1,7 @@
 import { createImageInput } from "./adapters/imageInput.js";
 import { analyzeCard, createAnalyzeTimeout, isUnreadableResult } from "./api/analyzeCard.js";
 import { bindActionSheet } from "./components/ActionSheet.js";
+import { bindConfirmModal } from "./components/ConfirmModal.js";
 import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/ErrorModal.js";
 import { deleteRememberedCard, loadCards, rememberCard } from "./store/cardStore.js";
 import { OCR_ROTATIONS, recognizeCardText } from "./utils/cardOcr.js";
@@ -192,17 +193,26 @@ async function handleAnalyze() {
   }
 }
 
-function handleRememberCard() {
-  const card = appState.currentCard;
-  if (!card?.cardName) {
-    showToast("카드명을 확인하지 못했어요.");
-    return;
-  }
+function readBenefitCardName() {
+  return document.getElementById("resultCardNameInput").value.trim();
+}
 
+// 한글 받침 유무에 맞춰 '을/를'을 붙인다.
+function withObjectParticle(name) {
+  const lastChar = name.charCodeAt(name.length - 1);
+  if (lastChar >= 0xac00 && lastChar <= 0xd7a3) {
+    const hasFinalConsonant = (lastChar - 0xac00) % 28 !== 0;
+    return hasFinalConsonant ? `${name}을` : `${name}를`;
+  }
+  return `${name}를`;
+}
+
+function saveRememberedCard(cardName) {
+  const card = appState.currentCard;
   try {
     rememberCard({
-      cardName: card.cardName,
-      cardCompany: card.cardCompany
+      cardName,
+      cardCompany: card?.cardCompany || ""
     });
     clearPreview();
     refreshDashboard();
@@ -225,12 +235,28 @@ function handleRememberCard() {
   }
 }
 
+function handleRememberCard() {
+  const cardName = readBenefitCardName();
+  if (!cardName) {
+    showToast("카드명을 확인하지 못했어요.");
+    return;
+  }
+
+  confirmModal.openModal({
+    title: `${withObjectParticle(cardName)} 기억하시겠습니까?`,
+    onOk() {
+      saveRememberedCard(cardName);
+    }
+  });
+}
+
 function handleCancelResult() {
   clearPreview();
   showView("dashboard");
 }
 
 const errorModal = bindErrorModal(document.getElementById("errorModal"));
+const confirmModal = bindConfirmModal(document.getElementById("confirmModal"));
 
 const imageInput = createImageInput({
   cameraInput: document.getElementById("cameraInput"),
