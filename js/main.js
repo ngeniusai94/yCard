@@ -6,6 +6,7 @@ import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/Err
 import { deleteRememberedCard, loadCards, rememberCard } from "./store/cardStore.js";
 import { OCR_ROTATIONS, recognizeCardText } from "./utils/cardOcr.js";
 import { isCardTextUnreadable, parseCardText } from "./utils/cardTextParser.js";
+import { toCanonicalCardCompany } from "./constants/cardCompanies.js";
 import { optimizeImage, formatByteSize } from "./utils/imageOptimizer.js";
 import { logApp, logAppError } from "./utils/logger.js";
 import { showToast } from "./utils/toast.js";
@@ -93,7 +94,7 @@ async function runOcrOnPendingImage(file) {
     return;
   }
 
-  companyInput.value = bestParsed.cardCompany;
+  companyInput.value = toCanonicalCardCompany(bestParsed.cardCompany) || bestParsed.cardCompany;
   nameInput.value = bestParsed.cardName;
   statusText.textContent = "자동으로 읽은 글자예요. 틀리면 직접 고쳐 주세요.";
 }
@@ -135,8 +136,12 @@ async function handleAnalyze() {
     return;
   }
 
-  const cardCompany = document.getElementById("ocrCardCompanyInput").value.trim();
+  const typedCompany = document.getElementById("ocrCardCompanyInput").value.trim();
+  const cardCompany = toCanonicalCardCompany(typedCompany) || typedCompany;
   const cardName = document.getElementById("ocrCardNameInput").value.trim();
+  if (cardCompany && cardCompany !== typedCompany) {
+    document.getElementById("ocrCardCompanyInput").value = cardCompany;
+  }
   if (!cardCompany && !cardName) {
     showToast("카드사 또는 카드명을 입력해 주세요.");
     return;

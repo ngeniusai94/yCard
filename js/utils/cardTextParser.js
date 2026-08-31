@@ -1,4 +1,4 @@
-import { findCardCompanyInText } from "../constants/cardCompanies.js";
+import { cardCompanyDirectory, findCardCompanyInText, toCanonicalCardCompany } from "../constants/cardCompanies.js";
 
 // 카드번호, 유효기간, CVC 등 민감/불필요 정보가 담긴 줄은 카드명 후보에서 제외한다.
 const SENSITIVE_LINE_PATTERNS = [
@@ -10,15 +10,50 @@ const SENSITIVE_LINE_PATTERNS = [
 // 카드명 후보로 보기 어려운 흔한 표기(카드 종류, 발급 안내 문구 등)는 제외한다.
 const GENERIC_LABEL_PATTERNS = [
   /^(credit|debit|check)\s*card$/i,
+  /^card$/i,
+  /^mastercard$/i,
+  /^visa$/i,
   /^republic of korea$/i,
   /^\d+$/
 ];
 
+// 카드 인쇄 OCR에서 자주 나오는 오타만 고친다. 임의 치환은 하지 않는다.
+const OCR_TYPO_REPLACEMENTS = [
+  [/가드/g, "카드"],
+  [/카트/g, "카드"],
+  [/오늘은\s*[6Gg]/g, "오늘은 e"],
+  [/오늘은\s*e\S*/gi, "오늘은 e카드"],
+  [/\b6카드/g, "e카드"],
+  [/BNIK/gi, "BNK"],
+  [/무산은/g, "부산은"],
+  [/부사은/g, "부산은"]
+];
+
+function correctOcrTypos(rawText) {
+  return OCR_TYPO_REPLACEMENTS.reduce(
+    (text, [pattern, replacement]) => text.replace(pattern, replacement),
+    rawText || ""
+  );
+}
+
 function splitLines(rawText) {
-  return (rawText || "")
+  return correctOcrTypos(rawText)
     .split(/\r?\n/)
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
+}
+
+// 세로 인쇄는 한 글자씩 줄이 나뉘는 경우가 많아, 한글 한 글자 줄은 앞 줄에 붙인다.
+function mergeBrokenHangulLines(lines) {
+  const merged = [];
+  lines.forEach((line) => {
+    if (/^[가-힣]$/.test(line) && merged.length) {
+      merged[merged.length - 1] += line;
+      return;
+    }
+    merged.push(line);
+  });
+  return merged;
 }
 
 function isSensitiveLine(line) {
@@ -35,9 +70,15 @@ function hasReadableLetters(line) {
 
 function stripCompanyMention(line, cardCompany) {
   if (!cardCompany) return line;
-  const withoutSuffix = cardCompany.replace(/(카드|은행)$/, "");
-  const pattern = new RegExp(withoutSuffix.split("").join("\\s*"), "gi");
-  return line.replace(pattern, "").trim();
+  const aliases = Object.keys(cardCompanyDirectory).filter(
+    (alias) => cardCompanyDirectory[alias].name === cardCompany
+  );
+  let cleaned = line;
+  aliases.forEach((alias) => {
+    const pattern = new RegExp(alias.split("").join("\\s*"), "gi");
+    cleaned = cleaned.replace(pattern, " ");
+  });
+  return cleaned.replace(/\s+/g, " ").trim();
 }
 
 function scoreNameCandidate(line) {
@@ -53,20 +94,27 @@ function scoreNameCandidate(line) {
  * @returns {{ cardCompany: string, cardName: string, confidence: number }}
  */
 export function parseCardText(rawText) {
-  const lines = splitLines(rawText);
+  const lines = mergeBrokenHangulLines(splitLines(rawText));
   const readableLines = lines.filter((line) => !isSensitiveLine(line));
 
-  const cardCompany = findCardCompanyInText(readableLines.join(" "));
+  let cardCompany = findCardCompanyInText(readableLines.join(" "));
+  if (!cardCompany) {
+    cardCompany = readableLines.map((line) => toCanonicalCardCompany(line)).find(Boolean) || "";
+  }
 
   const nameCandidates = readableLines
     .map((line) => stripCompanyMention(line, cardCompany))
     .filter((line) => line.length >= 2)
     .filter((line) => hasReadableLetters(line))
     .filter((line) => !isGenericLabel(line))
-    .filter((line) => !isSensitiveLine(line));
+    .filter((line) => !isSensitiveLine(line))
+    .filter((line) => toCanonicalCardCompany(line) !== cardCompany);
 
   nameCandidates.sort((a, b) => scoreNameCandidate(b) - scoreNameCandidate(a));
-  const cardName = nameCandidates[0] || "";
+  let cardName = nameCandidates[0] || "";
+  if (cardName && toCanonicalCardCompany(cardName) === cardCompany) {
+    cardName = "";
+  }
   const nameQuality = Math.min(scoreNameCandidate(cardName) / 40, 1);
 
   let confidence = 0.2;

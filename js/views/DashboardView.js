@@ -1,4 +1,4 @@
-import { findCardCompanyLogo } from "../constants/cardCompanies.js";
+import { findCardCompanyLogo, toCanonicalCardCompany } from "../constants/cardCompanies.js";
 
 function escapeHtml(value) {
   return String(value || "")
@@ -27,9 +27,10 @@ export function renderDashboard(cards) {
   cardList.innerHTML = cards
     .map((card) => {
       const cardName = card.cardName || "카드명 없음";
-      const logoUrl = findCardCompanyLogo(card.cardCompany);
+      const cardCompany = toCanonicalCardCompany(card.cardCompany) || card.cardCompany || "";
+      const logoUrl = findCardCompanyLogo(cardCompany);
       const logoHtml = logoUrl
-        ? `<img class="company-logo" src="${logoUrl}" alt="${escapeHtml(card.cardCompany || "")} 로고" />`
+        ? `<img class="company-logo" src="${logoUrl}" alt="${escapeHtml(cardCompany)} 로고" />`
         : "";
       return `
         <div class="remember-row">
@@ -37,7 +38,7 @@ export function renderDashboard(cards) {
             ${logoHtml}
             <div>
               <p class="remember-text">${escapeHtml(cardName)}</p>
-              ${card.cardCompany ? `<p class="remember-company">${escapeHtml(card.cardCompany)}</p>` : ""}
+              ${cardCompany ? `<p class="remember-company">${escapeHtml(cardCompany)}</p>` : ""}
             </div>
           </div>
           <button type="button" class="delete-btn" data-delete-card="${escapeHtml(card.id)}" aria-label="${escapeHtml(cardName)} 삭제">×</button>

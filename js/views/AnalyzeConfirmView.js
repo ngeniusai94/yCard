@@ -1,3 +1,5 @@
+import { toCanonicalCardCompany } from "../constants/cardCompanies.js";
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -24,7 +26,8 @@ function benefitDetail(benefit) {
 
 export function fillBenefitResult(card) {
   document.getElementById("resultCardNameInput").value = card.cardName || "";
-  document.getElementById("resultCardCompany").textContent = card.cardCompany || "";
+  document.getElementById("resultCardCompany").textContent =
+    toCanonicalCardCompany(card.cardCompany) || card.cardCompany || "";
 
   const list = document.getElementById("benefitList");
   const benefits = Array.isArray(card.benefits) ? card.benefits : [];

@@ -1,4 +1,6 @@
 // 1차는 서버 없이 카드명·카드사만 기기에 기억한다. 카드번호는 넣지 않는다.
+import { toCanonicalCardCompany } from "../constants/cardCompanies.js";
+
 const STORAGE_KEY = "ycard.cards.v1";
 const MAX_CARD_COUNT = 30;
 
@@ -33,7 +35,7 @@ export function deleteRememberedCard(cardId) {
 
 export function rememberCard({ cardName, cardCompany }) {
   const name = (cardName || "").trim();
-  const company = (cardCompany || "").trim();
+  const company = toCanonicalCardCompany(cardCompany) || (cardCompany || "").trim();
   if (!name) {
     throw new Error("EMPTY_NAME");
   }
