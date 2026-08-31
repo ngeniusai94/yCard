@@ -3,6 +3,8 @@ import { analyzeCard, createAnalyzeTimeout, isUnreadableResult } from "./api/ana
 import { bindActionSheet } from "./components/ActionSheet.js";
 import { bindErrorModal, mapAnalyzeError, mapImageError } from "./components/ErrorModal.js";
 import { deleteRememberedCard, loadCards, rememberCard } from "./store/cardStore.js";
+import { OCR_ROTATIONS, recognizeCardText } from "./utils/cardOcr.js";
+import { isCardTextUnreadable, parseCardText } from "./utils/cardTextParser.js";
 import { optimizeImage, formatByteSize } from "./utils/imageOptimizer.js";
 import { logApp, logAppError } from "./utils/logger.js";
 import { showToast } from "./utils/toast.js";
@@ -40,6 +42,9 @@ function clearPreview() {
   appState.pendingImage = null;
   appState.currentCard = null;
   document.getElementById("previewImage").removeAttribute("src");
+  document.getElementById("ocrCardCompanyInput").value = "";
+  document.getElementById("ocrCardNameInput").value = "";
+  document.getElementById("ocrStatusText").textContent = "글자를 읽고 있어요…";
 }
 
 function renderPreview(pendingImage) {
@@ -47,6 +52,49 @@ function renderPreview(pendingImage) {
   const previewMeta = document.getElementById("previewMeta");
   previewImage.src = pendingImage.previewDataUrl;
   previewMeta.textContent = `${pendingImage.width}×${pendingImage.height} · ${formatByteSize(pendingImage.byteSize)}`;
+}
+
+// 카드 인쇄 디자인은 로고·상품명이 세로로 적힌 경우가 많아, 회전 각도를 바꿔가며
+// 인식을 시도하고 가장 신뢰도가 높은 결과를 채택한다.
+const OCR_GOOD_ENOUGH_CONFIDENCE = 0.7;
+
+async function runOcrOnPendingImage(file) {
+  const statusText = document.getElementById("ocrStatusText");
+  const companyInput = document.getElementById("ocrCardCompanyInput");
+  const nameInput = document.getElementById("ocrCardNameInput");
+
+  statusText.textContent = "글자를 읽고 있어요…";
+
+  let bestParsed = null;
+  try {
+    for (const rotationDeg of OCR_ROTATIONS) {
+      const rawText = await recognizeCardText(file, rotationDeg);
+      const parsed = parseCardText(rawText);
+      logApp("ocr.attempt", { rotationDeg, ...parsed });
+
+      if (!bestParsed || parsed.confidence > bestParsed.confidence) {
+        bestParsed = parsed;
+      }
+      if (bestParsed.confidence >= OCR_GOOD_ENOUGH_CONFIDENCE) {
+        break;
+      }
+    }
+  } catch (error) {
+    logAppError("ocr.failed", { code: error.code || error.message });
+    statusText.textContent = "글자를 읽지 못했어요. 직접 입력해 주세요.";
+    return;
+  }
+
+  logApp("ocr.done", bestParsed);
+
+  if (!bestParsed || isCardTextUnreadable(bestParsed)) {
+    statusText.textContent = "카드사·카드명을 읽지 못했어요. 직접 입력해 주세요.";
+    return;
+  }
+
+  companyInput.value = bestParsed.cardCompany;
+  nameInput.value = bestParsed.cardName;
+  statusText.textContent = "자동으로 읽은 글자예요. 틀리면 직접 고쳐 주세요.";
 }
 
 function openBenefitResult(card) {
@@ -64,11 +112,11 @@ async function handleSelectedFile(file) {
       mimeType: optimized.mimeType,
       width: optimized.width,
       height: optimized.height,
-      byteSize: optimized.byteSize,
-      base64Length: optimized.uploadBase64.length
+      byteSize: optimized.byteSize
     });
     renderPreview(optimized);
     showView("preview");
+    runOcrOnPendingImage(file);
   } catch (error) {
     appState.pendingImage = null;
     errorModal.openModal(mapImageError(error));
@@ -85,6 +133,13 @@ async function handleAnalyze() {
   if (appState.analyzeSession) {
     return;
   }
+
+  const cardCompany = document.getElementById("ocrCardCompanyInput").value.trim();
+  const cardName = document.getElementById("ocrCardNameInput").value.trim();
+  if (!cardCompany && !cardName) {
+    showToast("카드사 또는 카드명을 입력해 주세요.");
+    return;
+  }
   if (!navigator.onLine) {
     errorModal.openModal(mapAnalyzeError({ code: "OFFLINE" }));
     return;
@@ -92,20 +147,14 @@ async function handleAnalyze() {
 
   const timeout = createAnalyzeTimeout();
   appState.analyzeSession = { timeout, canceledByUser: false };
-  setLoading(true, "카드명과 혜택을 읽고 있어요", true);
+  setLoading(true, "혜택을 찾고 있어요", true);
 
   try {
-    logApp("analyze.start", {
-      mimeType: appState.pendingImage.mimeType,
-      byteSize: appState.pendingImage.byteSize,
-      width: appState.pendingImage.width,
-      height: appState.pendingImage.height,
-      base64Length: appState.pendingImage.uploadBase64.length
-    });
+    logApp("analyze.start", { cardCompany, cardName });
 
     const result = await analyzeCard({
-      imageBase64: appState.pendingImage.uploadBase64,
-      mimeType: appState.pendingImage.mimeType,
+      cardCompany,
+      cardName,
       signal: timeout.signal
     });
 
@@ -116,8 +165,8 @@ async function handleAnalyze() {
         cardName: result.card?.cardName || ""
       });
       errorModal.openModal({
-        title: "카드를 인식하지 못했어요",
-        body: "카드명이 보이게 초점을 맞춘 뒤 다시 찍어 주세요."
+        title: "카드를 찾지 못했어요",
+        body: "카드사와 카드명을 다시 확인하고 입력해 주세요."
       });
       return;
     }

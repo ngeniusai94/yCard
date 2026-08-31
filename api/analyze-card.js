@@ -1,43 +1,25 @@
+import { buildCardSearchUrl, findCardCompanyHomePage } from "../js/constants/cardCompanies.js";
+
 // Gemini 키는 서버에만 두고, 브라우저로는 절대 내려주지 않는다.
+// 이미지를 전송하지 않고 텍스트(카드사/카드명)만 보내므로 저렴한 텍스트 모델을 쓴다.
 const PRIMARY_MODEL = "gemini-3.1-flash-lite";
 const FALLBACK_MODEL = "gemini-3.5-flash-lite";
 
-const COMPANY_HOME_PAGES = {
-  신한카드: "https://www.shinhancard.com",
-  신한: "https://www.shinhancard.com",
-  현대카드: "https://www.hyundaicard.com",
-  현대: "https://www.hyundaicard.com",
-  삼성카드: "https://www.samsungcard.com",
-  삼성: "https://www.samsungcard.com",
-  KB국민카드: "https://card.kbcard.com",
-  국민카드: "https://card.kbcard.com",
-  KB: "https://card.kbcard.com",
-  우리카드: "https://www.wooricard.com",
-  우리: "https://www.wooricard.com",
-  하나카드: "https://www.hanacard.co.kr",
-  하나: "https://www.hanacard.co.kr",
-  롯데카드: "https://www.lottecard.co.kr",
-  롯데: "https://www.lottecard.co.kr",
-  NH농협카드: "https://card.nonghyup.com",
-  농협카드: "https://card.nonghyup.com",
-  농협: "https://card.nonghyup.com",
-  IBK기업은행: "https://www.ibk.co.kr",
-  기업은행: "https://www.ibk.co.kr",
-  BC카드: "https://www.bccard.com",
-  BC: "https://www.bccard.com"
-};
-
-const ANALYZE_PROMPT = `당신은 한국 신용/체크카드 이미지에서 카드 정보를 추출한다.
-반드시 JSON 객체만 출력한다.
+const ANALYZE_PROMPT = `당신은 한국 신용/체크카드 혜택 정보를 알고 있는 어시스턴트다.
+사용자가 카드사와 카드명을 알려주면, 그 카드의 대표 혜택을 JSON으로만 출력한다.
 
 규칙:
-- 이미지에서 카드명, 카드사, 카드 종류를 읽는다.
-- 혜택 안내가 보이면 그대로 추출한다.
-- 혜택 글자가 없어도 카드명이 확인되면, 그 카드의 공개된 대표 혜택을 채운다.
+- 이미지는 없다. 오직 텍스트로 주어진 카드사·카드명만 보고 판단한다.
+- 카드사·카드명은 카드 사진을 OCR(광학 문자 인식)로 읽어서 얻은 값이라 오타·오인식이 섞여 있을 수 있다.
+  예: "6"↔"e", "O"↔"0", "1"↔"I"↔"l", 받침이 빠지거나 비슷한 자음/모음으로 잘못 읽힘, 공백 위치가 다름 등.
+  주어진 텍스트와 발음·형태가 비슷한 실제 카드사/카드명이 존재하면, 그 실제 카드로 보정해서 판단한다.
+  이때 응답의 card.cardName, card.cardCompany에는 보정한 정확한 이름을 넣는다.
+- 실제로 존재할 법한 카드의 공개된 대표 혜택을 가능한 한 폭넓게 채운다.
+  카드가 실제로 제공하는 혜택 카테고리(예: 주유/마트/커피/온라인쇼핑/대중교통/통신/해외이용/포인트 적립 등) 중
+  해당 카드가 실제로 제공하는 것을 최소 3개, 최대 8개까지 benefits 배열에 담는다. 혜택이 1~2개뿐인 카드라면 그만큼만 채운다.
+- 모르는 정보는 지어내지 말고 빈 값/빈 배열을 쓴다. 단, 혜택 개수를 줄이기 위해 아는 혜택을 생략하지 않는다.
 - officialDetailUrl은 비워 둔다. 링크는 서버가 카드사 대표 홈페이지로 채운다.
-- 모르면 지어내지 말고 빈 값/빈 배열을 쓴다.
-- 카드번호 전체, CVC, 유효기간, 주민번호, 서명은 절대 추출하지 않는다. 보이면 warnings에 "민감정보 감지됨 — 저장하지 않음"을 넣는다.
-- 카드가 아니거나 카드명을 읽기 어려우면 ok=false, confidence는 0.3 이하, cardName은 빈 문자열.
+- 오타를 보정해도 어떤 카드인지 전혀 알아볼 수 없으면 ok=false, confidence는 0.3 이하로 출력한다.
 
 출력 스키마:
 {
@@ -84,35 +66,20 @@ function extractJson(text) {
   }
 }
 
-function emptyBenefits() {
-  return {
-    performance: { previousMonthSpend: 0, note: "" },
-    benefits: [],
-    cautions: [],
-    rawSummary: ""
-  };
-}
-
-function findCompanyHomePage(cardCompany) {
-  const company = (cardCompany || "").replaceAll(" ", "");
-  if (!company) return "";
-  if (COMPANY_HOME_PAGES[company]) return COMPANY_HOME_PAGES[company];
-  const matchedKey = Object.keys(COMPANY_HOME_PAGES).find((key) => company.includes(key));
-  return matchedKey ? COMPANY_HOME_PAGES[matchedKey] : "";
-}
-
-function normalizeResult(parsed) {
+function normalizeResult(parsed, fallback) {
   const card = parsed?.card || {};
-  const cardCompany = card.cardCompany || "";
+  const cardCompany = card.cardCompany || fallback.cardCompany || "";
+  const cardName = (card.cardName || fallback.cardName || "").trim();
   return {
     ok: parsed?.ok !== false,
     confidence: Number(parsed?.confidence || 0),
     card: {
-      cardName: (card.cardName || "").trim(),
+      cardName,
       cardCompany,
       cardType: card.cardType || "UNKNOWN",
-      officialDetailUrl: findCompanyHomePage(cardCompany),
-      performance: card.performance || emptyBenefits().performance,
+      officialDetailUrl: findCardCompanyHomePage(cardCompany),
+      cardSearchUrl: buildCardSearchUrl(cardCompany, cardName),
+      performance: card.performance || { previousMonthSpend: 0, note: "" },
       benefits: Array.isArray(card.benefits) ? card.benefits : [],
       cautions: Array.isArray(card.cautions) ? card.cautions : [],
       rawSummary: card.rawSummary || ""
@@ -121,7 +88,7 @@ function normalizeResult(parsed) {
   };
 }
 
-async function requestGemini({ apiKey, model, imageBase64, mimeType, locale }) {
+async function requestGemini({ apiKey, model, cardCompany, cardName, locale }) {
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   return fetch(geminiUrl, {
     method: "POST",
@@ -137,26 +104,21 @@ async function requestGemini({ apiKey, model, imageBase64, mimeType, locale }) {
         {
           parts: [
             {
-              text: `locale=${locale}. 이미지에서 카드명, 카드사명, 카드 혜택만 JSON으로 추출하세요. URL 검색은 하지 마세요.`
-            },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: imageBase64
-              }
+              text: `locale=${locale}. 카드사: ${cardCompany || "미확인"}. 카드명: ${cardName || "미확인"} (OCR로 읽은 값이라 오타가 있을 수 있음, 비슷한 실제 카드로 보정해서 판단). 이 카드가 실제로 제공하는 대표 혜택을 카테고리별로 최대한 폭넓게(가능하면 3개 이상) JSON으로 알려줘. URL 검색은 하지 마세요.`
             }
           ]
         }
       ],
       generationConfig: {
         temperature: 0.1,
-        responseMimeType: "application/json"
+        responseMimeType: "application/json",
+        maxOutputTokens: 2048
       }
     })
   });
 }
 
-async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
+async function callGeminiJson({ apiKey, cardCompany, cardName, locale }) {
   const models = [PRIMARY_MODEL, FALLBACK_MODEL];
   let lastStatus = 0;
 
@@ -166,8 +128,8 @@ async function callGeminiJson({ apiKey, imageBase64, mimeType, locale }) {
     const geminiResponse = await requestGemini({
       apiKey,
       model,
-      imageBase64,
-      mimeType,
+      cardCompany,
+      cardName,
       locale
     });
 
@@ -216,30 +178,28 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { imageBase64, mimeType = "image/jpeg", locale = "ko-KR" } = req.body || {};
-  if (!imageBase64 || typeof imageBase64 !== "string") {
-    logServer("analyze.error", { reason: "INVALID_IMAGE" });
-    res.status(400).json({ ok: false, error: "INVALID_IMAGE" });
+  const { cardCompany = "", cardName = "", locale = "ko-KR" } = req.body || {};
+  if (!cardCompany.trim() && !cardName.trim()) {
+    logServer("analyze.error", { reason: "INVALID_CARD_TEXT" });
+    res.status(400).json({ ok: false, error: "INVALID_CARD_TEXT" });
     return;
   }
 
-  const safeMime = mimeType === "image/png" ? "image/png" : "image/jpeg";
   const startedAt = Date.now();
 
   logServer("analyze.send", {
     provider: "gemini",
     model: PRIMARY_MODEL,
-    mimeType: safeMime,
-    locale,
-    base64Length: imageBase64.length,
-    approxByteSize: Math.round(imageBase64.length * 0.75)
+    cardCompany,
+    cardName,
+    locale
   });
 
   try {
     const parsed = await callGeminiJson({
       apiKey,
-      imageBase64,
-      mimeType: safeMime,
+      cardCompany,
+      cardName,
       locale
     });
 
@@ -249,7 +209,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const result = normalizeResult(parsed);
+    const result = normalizeResult(parsed, { cardCompany, cardName });
     logServer("analyze.receive.json", result);
 
     res.status(200).json(result);

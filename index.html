@@ -50,9 +50,18 @@
       <p class="guide-text">반드시 카드 앞면을 업로드 해주세요.<br>카드번호가 보이는 화면은 촬영하지 마세요.</p>
       <img id="previewImage" class="preview-image" alt="선택한 카드 사진" />
       <p id="previewMeta" class="preview-meta"></p>
+
+      <section class="ocr-confirm-box">
+        <p id="ocrStatusText" class="guide-text">글자를 읽고 있어요…</p>
+        <label class="form-label" for="ocrCardCompanyInput">카드사</label>
+        <input id="ocrCardCompanyInput" class="form-input" type="text" placeholder="예: 신한카드" autocomplete="off" />
+        <label class="form-label" for="ocrCardNameInput">카드명</label>
+        <input id="ocrCardNameInput" class="form-input" type="text" placeholder="예: 딥오일" autocomplete="off" />
+        <p class="guide-text">자동으로 읽은 글자예요. 틀리면 직접 고쳐 주세요.</p>
+      </section>
     </main>
     <footer class="app-footer">
-      <button type="button" id="analyzeReadyBtn" class="primary-btn">분석하기</button>
+      <button type="button" id="analyzeReadyBtn" class="primary-btn">혜택 보기</button>
       <button type="button" id="previewRetryBtn" class="ghost-btn">다시 촬영 / 선택</button>
     </footer>
   </div>
@@ -73,8 +82,11 @@
       <div id="benefitList" class="benefit-list"></div>
 
       <section class="notice-box">
-        <p>자세한 한도와 카드별 혜택은 카드사 홈페이지를 참고해주세요</p>
-        <a id="officialLinkBtn" class="link-btn" target="_blank" rel="noopener noreferrer" hidden>이동하기</a>
+        <p>자세한 한도와 카드별 혜택은 아래에서 확인해주세요</p>
+        <div class="link-row">
+          <a id="cardSearchLinkBtn" class="link-btn" target="_blank" rel="noopener noreferrer" hidden>이 카드 정보 보기</a>
+          <a id="officialLinkBtn" class="link-btn" target="_blank" rel="noopener noreferrer" hidden>카드사 홈페이지</a>
+        </div>
       </section>
     </main>
     <footer class="app-footer">

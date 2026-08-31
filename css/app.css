@@ -232,6 +232,16 @@
   color: var(--muted-foreground);
 }
 
+.ocr-confirm-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--muted);
+}
+
 .card-list {
   display: flex;
   flex-direction: column;
@@ -302,6 +312,12 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--muted-foreground);
+}
+
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .link-btn {

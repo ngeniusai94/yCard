@@ -13,10 +13,9 @@ export class AnalyzeError extends Error {
 async function postAnalyze(body, signal) {
   const startedAt = Date.now();
   logApp("analyze.send", {
-    mimeType: body.mimeType,
-    locale: body.locale,
-    base64Length: body.imageBase64?.length || 0,
-    approxByteSize: Math.round((body.imageBase64?.length || 0) * 0.75)
+    cardCompany: body.cardCompany,
+    cardName: body.cardName,
+    locale: body.locale
   });
 
   const response = await fetch("/api/analyze-card", {
@@ -61,10 +60,10 @@ function shouldRetry(error, signal) {
   return error instanceof TypeError;
 }
 
-export async function analyzeCard({ imageBase64, mimeType, signal }) {
+export async function analyzeCard({ cardCompany, cardName, signal }) {
   const body = {
-    imageBase64,
-    mimeType,
+    cardCompany,
+    cardName,
     locale: "ko-KR"
   };
 

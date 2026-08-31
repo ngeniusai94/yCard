@@ -48,13 +48,16 @@ export function fillBenefitResult(card) {
       .join("");
   }
 
-  const officialLink = document.getElementById("officialLinkBtn");
-  const officialUrl = card.officialDetailUrl || "";
-  if (officialUrl) {
-    officialLink.href = officialUrl;
-    officialLink.hidden = false;
-  } else {
-    officialLink.removeAttribute("href");
-    officialLink.hidden = true;
+  fillLink(document.getElementById("cardSearchLinkBtn"), card.cardSearchUrl);
+  fillLink(document.getElementById("officialLinkBtn"), card.officialDetailUrl);
+}
+
+function fillLink(linkElement, url) {
+  if (url) {
+    linkElement.href = url;
+    linkElement.hidden = false;
+    return;
   }
+  linkElement.removeAttribute("href");
+  linkElement.hidden = true;
 }

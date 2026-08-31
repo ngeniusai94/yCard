@@ -1,6 +1,7 @@
+// 이미지는 서버로 전송하지 않는다. 화면 미리보기용으로만 축소한다.
+// (OCR은 원본 파일을 별도 해상도로 다시 렌더링해서 읽는다 — utils/cardOcr.js)
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const MAX_EDGE = 768;
-const THUMB_EDGE = 360;
 const TARGET_BYTES = 400 * 1024;
 const MAX_BYTES = 800 * 1024;
 
@@ -80,11 +81,6 @@ function blobToDataUrl(blob) {
   });
 }
 
-function stripDataUrlPrefix(dataUrl) {
-  const commaIndex = dataUrl.indexOf(",");
-  return commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
-}
-
 export function formatByteSize(byteSize) {
   if (byteSize < 1024) return `${byteSize} B`;
   const kiloByte = byteSize / 1024;
@@ -98,26 +94,23 @@ export async function optimizeImage(file) {
   }
 
   const bitmap = await loadBitmap(file);
-  const uploadCanvas = drawToCanvas(bitmap, MAX_EDGE);
-  const thumbCanvas = drawToCanvas(bitmap, THUMB_EDGE);
+  const previewCanvas = drawToCanvas(bitmap, MAX_EDGE);
 
   let quality = 0.72;
-  let blob = await canvasToBlob(uploadCanvas, quality);
+  let blob = await canvasToBlob(previewCanvas, quality);
   if (blob.size > TARGET_BYTES) {
     quality = 0.6;
-    blob = await canvasToBlob(uploadCanvas, quality);
+    blob = await canvasToBlob(previewCanvas, quality);
   }
   if (blob.size > MAX_BYTES) {
     quality = 0.5;
-    blob = await canvasToBlob(uploadCanvas, quality);
+    blob = await canvasToBlob(previewCanvas, quality);
   }
   if (blob.size > MAX_BYTES) {
     throw new Error("TOO_LARGE");
   }
 
   const previewDataUrl = await blobToDataUrl(blob);
-  const thumbnailBlob = await canvasToBlob(thumbCanvas, 0.7);
-  const thumbnailDataUrl = await blobToDataUrl(thumbnailBlob);
 
   if (bitmap.close) {
     bitmap.close();
@@ -125,11 +118,9 @@ export async function optimizeImage(file) {
 
   return {
     previewDataUrl,
-    thumbnailDataUrl,
-    uploadBase64: stripDataUrlPrefix(previewDataUrl),
     byteSize: blob.size,
     mimeType: "image/jpeg",
-    width: uploadCanvas.width,
-    height: uploadCanvas.height
+    width: previewCanvas.width,
+    height: previewCanvas.height
   };
 }
